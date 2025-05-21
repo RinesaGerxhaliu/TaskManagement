@@ -77,35 +77,6 @@ const TaskList = () => {
           </button>
         </div>
 
-        {/* Filters */}
-        <div className="row mb-4 g-3">
-          <div className="col-md-6">
-            <label className="form-label">Filter by Category</label>
-            <select
-              className="form-select"
-              value={filterCategory}
-              onChange={e => setFilterCategory(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="col-md-6">
-            <label className="form-label">Filter by Status</label>
-            <select
-              className="form-select"
-              value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
-            >
-              <option value="">All Statuses</option>
-              <option value="ToDo">ToDo</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
-          </div>
-        </div>
 
         {/* Tag assignment dropdown (outside table) */}
         <div className="row mb-4 g-3">

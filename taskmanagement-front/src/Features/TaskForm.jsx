@@ -1,43 +1,63 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const TaskForm = ({ initial = {}, onSubmit }) => {
+const TaskForm = ({ initial = {} }) => {
   const [title, setTitle] = useState(initial.title || "");
   const [description, setDescription] = useState(initial.description || "");
   const [categoryId, setCategoryId] = useState(initial.categoryId || "");
-  const [priorityId, setPriorityId] = useState(initial.priorityId || "");
+  const [status, setStatus] = useState(initial.status || "ToDo");
 
   const [categories, setCategories] = useState([]);
-  const [priorities, setPriorities] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetch("https://localhost:7086/api/Category")
       .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch(console.error);
-
-    fetch("https://localhost:7086/api/Priority")
-      .then((res) => res.json())
-      .then((data) => setPriorities(data))
+      .then(setCategories)
       .catch(console.error);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!categoryId || !priorityId) {
-      alert("Please select Category and Priority");
+    if (!categoryId) {
+      alert("Please select a Category");
       return;
     }
 
-    onSubmit({
+    const taskData = {
       title,
       description,
       categoryId: Number(categoryId),
-      priorityId: Number(priorityId),
-    });
+      status,
+    };
+
+    try {
+      setLoading(true);
+      const response = await fetch("https://localhost:7086/api/TaskItem", {
+        method: initial.id ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(taskData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert("Error: " + (error.message || "Failed to save task"));
+        setLoading(false);
+        return;
+      }
+
+      alert(initial.id ? "Task updated successfully!" : "Task added successfully!");
+      navigate("/");
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -48,13 +68,11 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
     <div
       style={{
         minHeight: "100vh",
-       
-        backgroundRepeat: "repeat",
-        backgroundSize: "auto",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         padding: "40px 20px",
+        backgroundColor: "#f7f9fc",
       }}
     >
       <form
@@ -62,10 +80,10 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
         style={{
           maxWidth: "600px",
           width: "100%",
-          backgroundColor: "rgba(245, 248, 255, 0.95)",
+          backgroundColor: "white",
           padding: "40px 30px",
           borderRadius: "16px",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           color: "#1F3A93",
         }}
@@ -75,13 +93,11 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
         </h2>
 
         <div className="mb-3">
-          <label
-            className="form-label fw-semibold"
-            style={{ color: "#1F3A93" }}
-          >
+          <label htmlFor="title" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Title
           </label>
           <input
+            id="title"
             className="form-control"
             placeholder="Enter task title"
             value={title}
@@ -93,17 +109,16 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
               boxShadow: "0 0 5px #4A90E2",
               transition: "border-color 0.3s ease",
             }}
+            disabled={loading}
           />
         </div>
 
         <div className="mb-3">
-          <label
-            className="form-label fw-semibold"
-            style={{ color: "#1F3A93" }}
-          >
+          <label htmlFor="description" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Description
           </label>
           <textarea
+            id="description"
             className="form-control"
             placeholder="Enter task description (optional)"
             value={description}
@@ -114,17 +129,16 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
               boxShadow: "0 0 5px #4A90E2",
               transition: "border-color 0.3s ease",
             }}
+            disabled={loading}
           />
         </div>
 
         <div className="mb-3">
-          <label
-            className="form-label fw-semibold"
-            style={{ color: "#1F3A93" }}
-          >
+          <label htmlFor="category" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Category
           </label>
           <select
+            id="category"
             className="form-select"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
@@ -134,6 +148,7 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
               boxShadow: "0 0 5px #4A90E2",
               transition: "border-color 0.3s ease",
             }}
+            disabled={loading}
           >
             <option value="">-- Select Category --</option>
             {categories.map((cat) => (
@@ -145,36 +160,28 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
         </div>
 
         <div className="mb-3">
-          <label
-            className="form-label fw-semibold"
-            style={{ color: "#1F3A93" }}
-          >
-            Priority
+          <label htmlFor="status" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+            Status
           </label>
           <select
+            id="status"
             className="form-select"
-            value={priorityId}
-            onChange={(e) => setPriorityId(e.target.value)}
-            required
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
             style={{
               borderColor: "#357ABD",
               boxShadow: "0 0 5px #4A90E2",
               transition: "border-color 0.3s ease",
             }}
+            disabled={loading}
           >
-            <option value="">-- Select Priority --</option>
-            {priorities.map((pri) => (
-              <option key={pri.id} value={pri.id}>
-                {pri.name}
-              </option>
-            ))}
+            <option value="ToDo">To Do</option>
+            <option value="InProgress">In Progress</option>
+            <option value="Done">Done</option>
           </select>
         </div>
 
-        <div
-          className="d-flex justify-content-center gap-3 mt-4"
-          style={{ gap: "20px" }}
-        >
+        <div className="d-flex justify-content-center gap-3 mt-4" style={{ gap: "20px" }}>
           <button
             type="submit"
             className="btn btn-primary px-4"
@@ -184,8 +191,9 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
               fontWeight: "600",
               boxShadow: "0 3px 8px rgba(53, 122, 189, 0.6)",
             }}
+            disabled={loading}
           >
-            Save
+            {loading ? (initial.id ? "Saving..." : "Adding...") : "Save"}
           </button>
           <button
             type="button"
@@ -196,6 +204,7 @@ const TaskForm = ({ initial = {}, onSubmit }) => {
               color: "#357ABD",
               borderColor: "#357ABD",
             }}
+            disabled={loading}
           >
             Cancel
           </button>
