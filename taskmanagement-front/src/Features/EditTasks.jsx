@@ -10,12 +10,10 @@ const EditTask = () => {
     title: "",
     description: "",
     status: "ToDo",
-    categoryId: "",
-    priorityId: ""
+    categoryId: ""
   });
 
   const [categories, setCategories] = useState([]);
-  const [priorities, setPriorities] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,17 +27,11 @@ const EditTask = () => {
           title: taskData.title || "",
           description: taskData.description || "",
           status: taskData.status || "ToDo",
-          categoryId: taskData.categoryId?.toString() || "",
-          priorityId: taskData.priorityId?.toString() || ""
+          categoryId: taskData.categoryId?.toString() || ""
         });
 
-        const [catRes, priRes] = await Promise.all([
-          axios.get("https://localhost:7086/api/Category"),
-          axios.get("https://localhost:7086/api/Priority")
-        ]);
-
+        const catRes = await axios.get("https://localhost:7086/api/Category");
         setCategories(catRes.data);
-        setPriorities(priRes.data);
         setIsLoading(false);
       } catch (err) {
         console.error("Gabim:", err);
@@ -51,26 +43,28 @@ const EditTask = () => {
     fetchData();
   }, [id]);
 
-  const handleChange = e => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setTask(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!task.categoryId || !task.priorityId) {
-      alert("Ju lutem zgjidhni Kategorinë dhe Prioritetin");
+    if (!task.categoryId) {
+      alert("Ju lutem zgjidhni Kategorinë");
       return;
     }
 
     try {
       await axios.put(`https://localhost:7086/api/TaskItem/${id}`, {
-        ...task,
-        categoryId: Number(task.categoryId),
-        priorityId: Number(task.priorityId)
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        categoryId: Number(task.categoryId)
       });
       alert("Detyra u përditësua me sukses.");
       navigate("/");
@@ -80,7 +74,7 @@ const EditTask = () => {
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div
         className="d-flex justify-content-center align-items-center"
@@ -91,13 +85,13 @@ const EditTask = () => {
         </div>
       </div>
     );
+  }
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundRepeat: "repeat",
-        backgroundSize: "auto",
+        backgroundColor: "#f7f9fc",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -109,10 +103,10 @@ const EditTask = () => {
         style={{
           maxWidth: "600px",
           width: "100%",
-          backgroundColor: "rgba(245, 248, 255, 0.95)",
+          backgroundColor: "white",
           padding: "40px 30px",
           borderRadius: "16px",
-          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           color: "#1F3A93"
         }}
@@ -128,10 +122,11 @@ const EditTask = () => {
         )}
 
         <div className="mb-3">
-          <label className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="title" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Title
           </label>
           <input
+            id="title"
             type="text"
             name="title"
             className="form-control"
@@ -149,10 +144,11 @@ const EditTask = () => {
         </div>
 
         <div className="mb-3">
-          <label className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="description" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Description
           </label>
           <textarea
+            id="description"
             name="description"
             className="form-control"
             placeholder="Enter task description (optional)"
@@ -168,10 +164,11 @@ const EditTask = () => {
         </div>
 
         <div className="mb-3">
-          <label className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="status" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Status
           </label>
           <select
+            id="status"
             name="status"
             className="form-select"
             value={task.status}
@@ -182,17 +179,18 @@ const EditTask = () => {
               transition: "border-color 0.3s ease"
             }}
           >
-            <option value="ToDo">ToDo</option>
+            <option value="ToDo">To Do</option>
             <option value="In Progress">In Progress</option>
             <option value="Done">Done</option>
           </select>
         </div>
 
-        <div className="mb-3">
-          <label className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+        <div className="mb-4">
+          <label htmlFor="categoryId" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
             Category
           </label>
           <select
+            id="categoryId"
             name="categoryId"
             className="form-select"
             value={task.categoryId}
@@ -208,31 +206,6 @@ const EditTask = () => {
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id.toString()}>
                 {cat.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
-            Priority
-          </label>
-          <select
-            name="priorityId"
-            className="form-select"
-            value={task.priorityId}
-            onChange={handleChange}
-            required
-            style={{
-              borderColor: "#357ABD",
-              boxShadow: "0 0 5px #4A90E2",
-              transition: "border-color 0.3s ease"
-            }}
-          >
-            <option value="">-- Select Priority --</option>
-            {priorities.map((pri) => (
-              <option key={pri.id} value={pri.id.toString()}>
-                {pri.name}
               </option>
             ))}
           </select>
