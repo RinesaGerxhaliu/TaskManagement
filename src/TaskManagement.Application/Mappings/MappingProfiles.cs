@@ -8,6 +8,7 @@ using TaskManagement.Application.DTOs.CatetegoryDTO;
 using TaskManagement.Application.DTOs.TagDTO;
 using TaskManagement.Application.DTOs.TaskDTO;
 using TaskManagement.Application.DTOs.TaskItemDTO;
+using TaskManagement.Application.DTOs.TaskTagDTO;
 using TaskManagement.Domain.Entities;
 
 namespace TaskManagement.Application.Mappings
@@ -30,6 +31,9 @@ namespace TaskManagement.Application.Mappings
             CreateMap<Tag, TagDto>().ReverseMap();
             CreateMap<AddTagDto, Tag>().ReverseMap();
             CreateMap<EditTagDto, Tag>().ReverseMap();
+
+            CreateMap<TaskTag, TaskTagDto>().ReverseMap();
+            CreateMap<AddTaskTagDto, TaskTag>().ReverseMap();
         }
     }
 }
