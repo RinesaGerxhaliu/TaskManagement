@@ -86,45 +86,6 @@ namespace TaskManagement.Controllers
             return BadRequest("Something went wrong!");
         }*/
 
-        [HttpPost]
-        [Route("UpdateUserRole")]
-        public async Task<IActionResult> UpdateUserRole([FromBody] UpdateUserRoleRequestDTO updateUserRoleRequest)
-        {
-            if (updateUserRoleRequest == null)
-            {
-                return BadRequest("Request body is null.");
-            }
-
-            var user = await userManager.FindByIdAsync(updateUserRoleRequest.UserId);
-
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            // Remove current roles
-            var currentRoles = await userManager.GetRolesAsync(user);
-            var removeRolesResult = await userManager.RemoveFromRolesAsync(user, currentRoles);
-
-            if (!removeRolesResult.Succeeded)
-            {
-                var errors = string.Join(", ", removeRolesResult.Errors.Select(e => e.Description));
-                return BadRequest($"Failed to remove current roles: {errors}");
-            }
-
-            // Assign the new role
-            var addRoleResult = await userManager.AddToRoleAsync(user, updateUserRoleRequest.NewRole);
-
-            if (!addRoleResult.Succeeded)
-            {
-                var errors = string.Join(", ", addRoleResult.Errors.Select(e => e.Description));
-                return BadRequest($"Failed to assign new role: {errors}");
-            }
-
-            return Ok("User role updated successfully.");
-        }
-
-
 
         [HttpPost]
         [Route("Login")]
