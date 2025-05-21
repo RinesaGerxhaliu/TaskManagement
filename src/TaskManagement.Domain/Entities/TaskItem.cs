@@ -12,12 +12,8 @@ namespace TaskManagement.Domain.Entities
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
 
-        public int PriorityId { get; set; }
-        public Priority Priority { get; set; } = null!;
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
     }
 

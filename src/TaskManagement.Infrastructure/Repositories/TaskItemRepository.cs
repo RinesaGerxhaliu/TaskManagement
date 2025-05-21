@@ -24,7 +24,6 @@ namespace TaskManagement.Infrastructure.Repositories
         {
             return await _dbContext.Tasks
                 .Include(t => t.Category)
-                .Include(t => t.Priority)
                 .ToListAsync();
         }
 
@@ -32,7 +31,6 @@ namespace TaskManagement.Infrastructure.Repositories
         {
             return await _dbContext.Tasks
                 .Include(t => t.Category)
-                .Include(t => t.Priority)
               
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
@@ -44,7 +42,6 @@ namespace TaskManagement.Infrastructure.Repositories
 
             return await _dbContext.Tasks
                 .Include(t => t.Category)
-                .Include(t => t.Priority)
                 .FirstOrDefaultAsync(t => t.Id == taskItem.Id);
         }
 
@@ -53,7 +50,6 @@ namespace TaskManagement.Infrastructure.Repositories
         {
             var existing = await _dbContext.Tasks
      .Include(t => t.Category)
-     .Include(t => t.Priority)
      .FirstOrDefaultAsync(t => t.Id == id);
 
 
@@ -63,7 +59,6 @@ namespace TaskManagement.Infrastructure.Repositories
             existing.Description = taskItem.Description;
             existing.Status = taskItem.Status;
             existing.CategoryId = taskItem.CategoryId;
-            existing.PriorityId = taskItem.PriorityId;
 
             await _dbContext.SaveChangesAsync();
             return existing;
@@ -81,7 +76,6 @@ namespace TaskManagement.Infrastructure.Repositories
             existing.Description = taskItem.Description;
             existing.Status = taskItem.Status;
             existing.CategoryId = taskItem.CategoryId;
-            existing.PriorityId = taskItem.PriorityId;
 
             // Update tags
             existing.TaskTags.Clear();

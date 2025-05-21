@@ -22,8 +22,7 @@ namespace TaskManagement.Application.Mappings
             CreateMap<EditCategory, Category>().ReverseMap();
 
             CreateMap<TaskItem, TaskItemDto>()
-             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
-             .ForMember(dest => dest.PriorityName, opt => opt.MapFrom(src => src.Priority.Level));
+             .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
 
             CreateMap<AddTaskItem, TaskItem>();
             CreateMap<EditTaskItem, TaskItem>();

@@ -16,8 +16,6 @@ namespace TaskManagement.Infrastructure.Data
         public DbSet<User> User { get; set; }
         public DbSet<TaskItem> Tasks => Set<TaskItem>();
         public DbSet<Category> Categories => Set<Category>();
-        public DbSet<Priority> Priorities => Set<Priority>();
-        public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Tag> Tags => Set<Tag>();
         public DbSet<TaskTag> TaskTags => Set<TaskTag>();
 

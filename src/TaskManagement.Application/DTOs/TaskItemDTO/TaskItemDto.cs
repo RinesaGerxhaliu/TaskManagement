@@ -15,9 +15,6 @@ namespace TaskManagement.Application.DTOs.TaskDTO
         public DateTime CreatedAt { get; set; }
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; } 
-
-        public int PriorityId { get; set; }
-        public string? PriorityName { get; set; }
        
     }
 }

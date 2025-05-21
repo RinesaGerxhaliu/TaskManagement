@@ -13,6 +13,5 @@ namespace TaskManagement.Application.DTOs.TaskItemDTO
         public string Status { get; set; } = "ToDo";
 
         public int CategoryId { get; set; }
-        public int PriorityId { get; set; }
     }
 }
