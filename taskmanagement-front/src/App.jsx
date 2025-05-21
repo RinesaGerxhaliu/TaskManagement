@@ -3,6 +3,7 @@ import Navbar from "./Components/Layout/Navbar";
 import TaskList from "./Features/TaskList";
 import TaskForm from "./Features/TaskForm";
 import { createTask } from "./Features/metaService";
+import EditTask from './Features/EditTasks';
 
 function App() {
   const handleCreateTask = async (task) => {
@@ -21,6 +22,7 @@ function App() {
       <div className="container mt-4">
         <Routes>
           <Route path="/" element={<TaskList />} />
+          <Route path="/edit/:id" element={<EditTask />} />
           <Route
             path="/add"
             element={<TaskForm onSubmit={handleCreateTask} />}
