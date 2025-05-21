@@ -14,7 +14,7 @@ const TaskList = () => {
     getCategories().then(setCategories).catch(console.error);
   }, []);
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     return (
       (filterCategory === "" || task.categoryId === Number(filterCategory)) &&
       (filterStatus === "" || task.status === filterStatus)
@@ -25,17 +25,45 @@ const TaskList = () => {
     navigate("/add");
   };
 
+  // Funksioni për fshirje të një task
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const response = await fetch(`https://localhost:7086/api/TaskItem/${taskId}`, {
+        method: "DELETE",
+      });
+
+      if (response.status === 404) {
+        alert("Task not found or already deleted.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task");
+      }
+
+      // Përditëso listën e detyrave në frontend pas fshirjes
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("An error occurred while deleting the task.");
+    }
+  };
+
+  
+
   return (
     <div
       style={{
         minHeight: "100vh",
         backgroundColor: "#f8f9fa",
-        padding: "40px 80px", // wider horizontal padding
+        padding: "40px 80px",
       }}
     >
       <div
         style={{
-          maxWidth: "1200px", // wider container
+          maxWidth: "1200px",
           margin: "0 auto",
           backgroundColor: "#fff",
           borderRadius: "12px",
@@ -65,10 +93,10 @@ const TaskList = () => {
               id="categoryFilter"
               className="form-select"
               value={filterCategory}
-              onChange={e => setFilterCategory(e.target.value)}
+              onChange={(e) => setFilterCategory(e.target.value)}
             >
               <option value="">-- Select Category --</option>
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
@@ -84,7 +112,7 @@ const TaskList = () => {
               id="statusFilter"
               className="form-select"
               value={filterStatus}
-              onChange={e => setFilterStatus(e.target.value)}
+              onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="">-- Select Status --</option>
               <option value="ToDo">ToDo</option>
@@ -95,7 +123,10 @@ const TaskList = () => {
         </div>
 
         <div className="table-responsive shadow-sm rounded">
-          <table className="table table-hover align-middle mb-0" style={{ minWidth: "100%" }}>
+          <table
+            className="table table-hover align-middle mb-0"
+            style={{ minWidth: "100%" }}
+          >
             <thead className="table-primary text-center">
               <tr>
                 <th style={{ minWidth: "220px" }}>Title</th>
@@ -103,55 +134,66 @@ const TaskList = () => {
                 <th style={{ minWidth: "130px" }}>Status</th>
                 <th style={{ minWidth: "130px" }}>Priority</th>
                 <th style={{ minWidth: "150px" }}>Created At</th>
-                <th style={{ minWidth: "100px" }}>Actions</th>
+                <th style={{ minWidth: "130px" }}>Edit Task</th>
+                <th style={{ minWidth: "130px" }}>Remove</th>
               </tr>
             </thead>
-            <tbody>
-              {filteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-muted fst-italic">
-                    No tasks to display. <br />
-                    <button
-                      className="btn btn-outline-primary mt-3"
-                      onClick={handleAddTaskClick}
-                    >
-                      Add a New Task
-                    </button>
-                  </td>
-                </tr>
-              ) : (
-                filteredTasks.map(task => (
-                  <tr key={task.id} className="text-center">
-                    <td className="fw-semibold text-start">{task.title}</td>
-                    <td>{task.categoryName}</td>
-                    <td>
-                      <span
-                        className={`badge ${
-                          task.status === "Done"
-                            ? "bg-success"
-                            : task.status === "In Progress"
-                            ? "bg-warning text-dark"
-                            : "bg-secondary"
-                        }`}
-                      >
-                        {task.status}
-                      </span>
-                    </td>
-                    <td>{task.priorityName}</td>
-                    <td>{new Date(task.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => navigate(`/edit/${task.id}`)}
-                        title="Edit Task"
-                      >
-                        <i className="bi bi-pencil-square"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+           
+<tbody>
+  {filteredTasks.length === 0 ? (
+    <tr>
+      <td colSpan="6" className="text-center py-4 text-muted fst-italic">
+        No tasks to display.
+        <br />
+        <button className="btn btn-outline-primary mt-3" onClick={handleAddTaskClick}>
+          Add a New Task
+        </button>
+      </td>
+    </tr>
+  ) : (
+    filteredTasks.map((task) => (
+      <tr key={task.id} className="text-center">
+        <td className="fw-semibold text-start">{task.title}</td>
+        <td>{task.categoryName}</td>
+        <td>
+          <span
+            className={`badge ${
+              task.status === "Done"
+                ? "bg-success"
+                : task.status === "In Progress"
+                ? "bg-warning text-dark"
+                : "bg-secondary"
+            }`}
+          >
+            {task.status}
+          </span>
+        </td>
+        <td>{task.priorityName}</td>
+        <td>{new Date(task.createdAt).toLocaleDateString()}</td>
+        <td>
+  <button
+    className="btn btn-sm btn-outline-primary me-2"
+    onClick={() => navigate(`/edit/${task.id}`)}
+    title="Edit Task"
+  >
+    <i className="bi bi-pencil"></i>  {/* Ikona e stilizuar e stilit Bootstrap */}
+  </button>
+</td>
+        <td>
+              {/* Butoni për fshirje */}
+              <button
+                className="btn btn-sm btn-outline-danger"
+                onClick={() => handleDeleteTask(task.id)}
+                title="Delete Task"
+              >
+                🗑️
+              </button>
+            </td>
+      </tr>
+    ))
+  )}
+</tbody>
+
           </table>
         </div>
       </div>
