@@ -7,6 +7,7 @@ namespace TaskManagement.Application.DTOs.TaskTagDTO
     {
         public int TaskItemId { get; set; }
         public int TagId { get; set; }
+        public string TagName { get; set; } = null!;
 
     }
 }

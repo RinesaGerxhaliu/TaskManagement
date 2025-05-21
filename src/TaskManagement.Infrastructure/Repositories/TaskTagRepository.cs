@@ -12,17 +12,18 @@ namespace TaskManagement.Infrastructure.Repositories
 
         public async Task<List<TaskTag>> GetAllByTaskAsync(int taskItemId) =>
             await _ctx.TaskTags
-                      .Include(tt => tt.Tag)
+                      .Include(tt => tt.Tag)               
                       .Where(tt => tt.TaskItemId == taskItemId)
                       .AsNoTracking()
                       .ToListAsync();
 
         public async Task<TaskTag?> GetByIdsAsync(int taskItemId, int tagId) =>
             await _ctx.TaskTags
-                      .Include(tt => tt.Tag)
+                      .Include(tt => tt.Tag)               
                       .FirstOrDefaultAsync(tt =>
                           tt.TaskItemId == taskItemId &&
                           tt.TagId == tagId);
+
 
         public async Task<TaskTag> CreateAsync(TaskTag taskTag)
         {

@@ -32,8 +32,13 @@ namespace TaskManagement.Application.Mappings
             CreateMap<AddTagDto, Tag>().ReverseMap();
             CreateMap<EditTagDto, Tag>().ReverseMap();
 
-            CreateMap<TaskTag, TaskTagDto>().ReverseMap();
-            CreateMap<AddTaskTagDto, TaskTag>().ReverseMap();
+            CreateMap<TaskTag, TaskTagDto>()
+               .ForMember(dest => dest.TagName, opt => opt.MapFrom(src => src.Tag.Name));
+
+            CreateMap<AddTaskTagDto, TaskTag>()
+                .ForMember(dest => dest.TagId, opt => opt.MapFrom(src => src.TagId))
+                .ForMember(dest => dest.TaskItemId, opt => opt.Ignore())
+                .ForMember(dest => dest.Tag, opt => opt.Ignore());
         }
     }
 }

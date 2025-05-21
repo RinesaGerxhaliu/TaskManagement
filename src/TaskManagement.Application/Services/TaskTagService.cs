@@ -31,14 +31,17 @@ namespace TaskManagement.Application.Services
 
         public async Task<TaskTagDto> CreateAsync(int taskItemId, AddTaskTagDto dto)
         {
-            var entity = new TaskTag
+            var link = new TaskTag
             {
                 TaskItemId = taskItemId,
                 TagId = dto.TagId
             };
+            await _repo.CreateAsync(link);
 
-            var created = await _repo.CreateAsync(entity);
-            return _mapper.Map<TaskTagDto>(created);
+            var full = await _repo.GetByIdsAsync(taskItemId, dto.TagId)!
+                       ?? throw new InvalidOperationException("Created link not found");
+
+            return _mapper.Map<TaskTagDto>(full);
         }
 
         public async Task<TaskTagDto?> DeleteAsync(int taskItemId, int tagId)
@@ -47,4 +50,8 @@ namespace TaskManagement.Application.Services
             return _mapper.Map<TaskTagDto?>(deleted);
         }
     }
+
 }
+
+    
+

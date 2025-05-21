@@ -1,4 +1,4 @@
-const BASE = "https://localhost:7086/api"; // përdor URL e backend-it tënd
+const BASE = "https://localhost:7086/api";
 
 export async function getTasks() {
   const res = await fetch(`${BASE}/TaskItem`);
@@ -42,3 +42,36 @@ export async function getPriorities() {
   if (!res.ok) throw new Error("Failed to fetch priorities");
   return res.json();
 }
+
+export async function getTags() {
+  const res = await fetch(`${BASE}/Tags`);
+  if (!res.ok) {
+    console.error("Tag API returned", res.status, await res.text());
+    return [];
+  }
+  return res.json();
+}
+
+export async function getTaskTags(taskId) {
+  const res = await fetch(`${BASE}/tasks/${taskId}/tags`);
+  if (!res.ok) throw new Error("Failed loading task tags");
+  return res.json();
+}
+
+export async function addTaskTag(taskId, tagId) {
+  const res = await fetch(`${BASE}/tasks/${taskId}/tags`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tagId }),
+  });
+  if (!res.ok) throw new Error("Failed adding tag to task");
+  return res.json();
+}
+
+export async function removeTaskTag(taskId, tagId) {
+  const res = await fetch(`${BASE}/tasks/${taskId}/tags/${tagId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed removing tag from task");
+}
+

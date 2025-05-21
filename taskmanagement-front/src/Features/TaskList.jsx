@@ -1,12 +1,20 @@
+
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTasks, getCategories } from "../Features/metaService";
+import TaskTagManager from "../Components/Layout/TaskTagManager";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmTaskId, setConfirmTaskId] = useState(null);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [tagRefreshKey, setTagRefreshKey] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,189 +22,182 @@ const TaskList = () => {
     getCategories().then(setCategories).catch(console.error);
   }, []);
 
-  const filteredTasks = tasks.filter((task) => {
-    return (
-      (filterCategory === "" || task.categoryId === Number(filterCategory)) &&
-      (filterStatus === "" || task.status === filterStatus)
-    );
-  });
+  const filteredTasks = tasks.filter(task =>
+    (filterCategory === "" || task.categoryId === Number(filterCategory)) &&
+    (filterStatus === "" || task.status === filterStatus)
+  );
 
-  const handleAddTaskClick = () => {
-    navigate("/add");
+  const handleAddTaskClick = () => navigate("/add");
+
+  const confirmDelete = taskId => {
+    setConfirmTaskId(taskId);
+    setShowConfirm(true);
   };
 
-  // Funksioni për fshirje të një task
-  const handleDeleteTask = async (taskId) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
-
+  const handleDeleteTask = async () => {
+    if (confirmTaskId == null) return;
     try {
-      const response = await fetch(`https://localhost:7086/api/TaskItem/${taskId}`, {
-        method: "DELETE",
-      });
-
-      if (response.status === 404) {
-        alert("Task not found or already deleted.");
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error("Failed to delete task");
-      }
-
-      // Përditëso listën e detyrave në frontend pas fshirjes
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("An error occurred while deleting the task.");
+      const res = await fetch(
+        `https://localhost:7086/api/TaskItem/${confirmTaskId}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error("Delete failed");
+      setTasks(ts => ts.filter(t => t.id !== confirmTaskId));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setShowConfirm(false);
+      setConfirmTaskId(null);
     }
   };
 
-  
+  const cancelDelete = () => {
+    setShowConfirm(false);
+    setConfirmTaskId(null);
+  };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f8f9fa",
-        padding: "40px 80px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          boxShadow: "0 6px 18px rgba(0,0,0,0.1)",
-          padding: "30px 40px",
-        }}
-      >
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="text-primary fw-bold border-bottom pb-2 mb-0">
-            Task List
-          </h2>
-          <button
-            onClick={handleAddTaskClick}
-            className="btn btn-success shadow-sm"
-            title="Add new task"
-          >
-            <i className="bi bi-plus-lg me-2"></i> Add Task
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", padding: 40 }}>
+      <div style={{ maxWidth: 1200, margin: "auto", background: "#fff", padding: 30, borderRadius: 12 }}>
+        <div className="d-flex justify-content-between mb-4">
+          <h2>Task List</h2>
+          <button className="btn btn-success" onClick={handleAddTaskClick}>
+            + Add Task
           </button>
         </div>
+        <div className="mb-4">
+          <label htmlFor="taskTagSelect" className="form-label">
+            Add a Tag to:
+          </label>
+          <select
+            id="taskTagSelect"
+            className="form-select mb-2"
+            value={selectedTaskId || ""}
+            onChange={e => setSelectedTaskId(Number(e.target.value))}
+          >
+            <option value="" disabled>Select a task…</option>
+            {tasks.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
+          </select>
 
-        <div className="row mb-4 g-3">
-          <div className="col-md-6">
-            <label htmlFor="categoryFilter" className="form-label fw-semibold">
-              Filter by Category
-            </label>
+          {selectedTaskId && (
+            <TaskTagManager
+              taskId={selectedTaskId}
+              showBadges={false}
+              showDropdown
+              onTagAdded={() => setTagRefreshKey(k => k + 1)}
+            />
+          )}
+        </div>
+
+
+        <div className="row mb-4">
+          <div className="col">
             <select
-              id="categoryFilter"
               className="form-select"
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
+              onChange={e => setFilterCategory(e.target.value)}
             >
-              <option value="">-- Select Category --</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-
-          <div className="col-md-6">
-            <label htmlFor="statusFilter" className="form-label fw-semibold">
-              Filter by Status
-            </label>
+          <div className="col">
             <select
-              id="statusFilter"
               className="form-select"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={e => setFilterStatus(e.target.value)}
             >
-              <option value="">-- Select Status --</option>
-              <option value="ToDo">ToDo</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Done">Done</option>
+              <option value="">All Statuses</option>
+              <option>ToDo</option>
+              <option>In Progress</option>
+              <option>Done</option>
             </select>
           </div>
         </div>
 
-        <div className="table-responsive shadow-sm rounded">
-          <table
-            className="table table-hover align-middle mb-0"
-            style={{ minWidth: "100%" }}
-          >
+        {/* table */}
+        <div className="table-responsive">
+          <table className="table table-hover align-middle">
             <thead className="table-primary text-center">
               <tr>
-                <th style={{ minWidth: "220px" }}>Title</th>
-                <th style={{ minWidth: "150px" }}>Category</th>
-                <th style={{ minWidth: "130px" }}>Status</th>
-                <th style={{ minWidth: "130px" }}>Priority</th>
-                <th style={{ minWidth: "150px" }}>Created At</th>
-                <th style={{ minWidth: "130px" }}>Edit Task</th>
-                <th style={{ minWidth: "130px" }}>Remove</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Created At</th>
+                <th>Tags</th>
+                <th>Edit</th>
+                <th>Delete</th>
               </tr>
             </thead>
-           
-<tbody>
-  {filteredTasks.length === 0 ? (
-    <tr>
-      <td colSpan="6" className="text-center py-4 text-muted fst-italic">
-        No tasks to display.
-        <br />
-        <button className="btn btn-outline-primary mt-3" onClick={handleAddTaskClick}>
-          Add a New Task
-        </button>
-      </td>
-    </tr>
-  ) : (
-    filteredTasks.map((task) => (
-      <tr key={task.id} className="text-center">
-        <td className="fw-semibold text-start">{task.title}</td>
-        <td>{task.categoryName}</td>
-        <td>
-          <span
-            className={`badge ${
-              task.status === "Done"
-                ? "bg-success"
-                : task.status === "In Progress"
-                ? "bg-warning text-dark"
-                : "bg-secondary"
-            }`}
-          >
-            {task.status}
-          </span>
-        </td>
-        <td>{task.priorityName}</td>
-        <td>{new Date(task.createdAt).toLocaleDateString()}</td>
-        <td>
-  <button
-    className="btn btn-sm btn-outline-primary me-2"
-    onClick={() => navigate(`/edit/${task.id}`)}
-    title="Edit Task"
-  >
-    <i className="bi bi-pencil"></i>  {/* Ikona e stilizuar e stilit Bootstrap */}
-  </button>
-</td>
-        <td>
-              {/* Butoni për fshirje */}
-              <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => handleDeleteTask(task.id)}
-                title="Delete Task"
-              >
-                🗑️
-              </button>
-            </td>
-      </tr>
-    ))
-  )}
-</tbody>
-
+            <tbody>
+              {filteredTasks.length === 0
+                ? <tr><td colSpan="8" className="text-center py-4">No tasks found</td></tr>
+                : filteredTasks.map(task => (
+                  <tr key={task.id} className="text-center">
+                    <td className="text-start">{task.title}</td>
+                    <td>{task.categoryName}</td>
+                    <td>
+                      <span className={`badge ${task.status === "Done" ? "bg-success" :
+                        task.status === "In Progress" ? "bg-warning text-dark" :
+                          "bg-secondary"}`}
+                      >
+                        {task.status}
+                      </span>
+                    </td>
+                    <td>{task.priorityName}</td>
+                    <td>{new Date(task.createdAt).toLocaleDateString()}</td>
+                    <td style={{ whiteSpace: "nowrap", width: 200 }}>
+                      <TaskTagManager
+                        taskId={task.id}
+                        showBadges
+                        showDropdown={false}
+                        refreshKey={tagRefreshKey}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => navigate(`/edit/${task.id}`)}
+                      >✏️</button>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => confirmDelete(task.id)}
+                      >🗑️</button>
+                    </td>
+                  </tr>
+                ))
+              }
+            </tbody>
           </table>
         </div>
       </div>
+
+      {showConfirm && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "#fff", padding: 20, borderRadius: 8, textAlign: "center", minWidth: 300
+          }}>
+            <p>Really delete this task?</p>
+            <button className="btn btn-danger me-2" onClick={handleDeleteTask}>
+              Yes, delete
+            </button>
+            <button className="btn btn-secondary" onClick={cancelDelete}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
