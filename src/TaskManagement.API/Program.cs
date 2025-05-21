@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagement.Infrastructure.Data;
-using AutoMapper;     
-using TaskManagement.Application.Interfaces;     
+using TaskManagement.Application.Interfaces;
 using TaskManagement.Infrastructure.Repositories;
 using TaskManagement.Domain.Interfaces;
-using TaskManagement.Application.Services; 
+using TaskManagement.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +29,10 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ITaskItemService, TaskItemService>();
-
 builder.Services.AddScoped<ITaskItemRepository, TaskItemRepository>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskManagement.Application.DTOs.CatetegoryDTO;
+using TaskManagement.Application.DTOs.TagDTO;
 using TaskManagement.Application.DTOs.TaskDTO;
 using TaskManagement.Application.DTOs.TaskItemDTO;
 using TaskManagement.Domain.Entities;
@@ -25,6 +26,10 @@ namespace TaskManagement.Application.Mappings
 
             CreateMap<AddTaskItem, TaskItem>();
             CreateMap<EditTaskItem, TaskItem>();
+
+            CreateMap<Tag, TagDto>().ReverseMap();
+            CreateMap<AddTagDto, Tag>().ReverseMap();
+            CreateMap<EditTagDto, Tag>().ReverseMap();
         }
     }
 }
