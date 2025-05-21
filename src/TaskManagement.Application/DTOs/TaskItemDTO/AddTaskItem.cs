@@ -10,8 +10,9 @@ namespace TaskManagement.Application.DTOs.TaskItemDTO
     {
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
+        public string Status { get; set; } = "ToDo";
+
         public int CategoryId { get; set; }
         public int PriorityId { get; set; }
-        public string Status { get; set; } = "ToDo";
     }
 }

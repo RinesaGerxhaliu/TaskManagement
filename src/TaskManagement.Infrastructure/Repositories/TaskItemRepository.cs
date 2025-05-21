@@ -1,0 +1,108 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TaskManagement.Domain.Entities;
+using TaskManagement.Domain.Interfaces;
+using TaskManagement.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace TaskManagement.Infrastructure.Repositories
+{
+    public class TaskItemRepository : ITaskItemRepository
+    {
+        private readonly TaskManagementDbContext _dbContext;
+
+        public TaskItemRepository(TaskManagementDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<TaskItem>> GetAllAsync()
+        {
+            return await _dbContext.Tasks
+                .Include(t => t.Category)
+                .Include(t => t.Priority)
+                .ToListAsync();
+        }
+
+        public async Task<TaskItem?> GetByIdAsync(int id)
+        {
+            return await _dbContext.Tasks
+                .Include(t => t.Category)
+                .Include(t => t.Priority)
+              
+                .FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        public async Task<TaskItem> CreateAsync(TaskItem taskItem)
+        {
+            _dbContext.Tasks.Add(taskItem);
+            await _dbContext.SaveChangesAsync();
+
+            // Ngarko lidhjet për tu kthyer me emrat e kategorisë dhe prioritetit
+            return await _dbContext.Tasks
+                .Include(t => t.Category)
+                .Include(t => t.Priority)
+                .FirstOrDefaultAsync(t => t.Id == taskItem.Id);
+        }
+
+
+        public async Task<TaskItem?> UpdateAsync(int id, TaskItem taskItem)
+        {
+            var existing = await _dbContext.Tasks
+     .Include(t => t.Category)
+     .Include(t => t.Priority)
+     .FirstOrDefaultAsync(t => t.Id == id);
+
+
+            if (existing == null) return null;
+
+            existing.Title = taskItem.Title;
+            existing.Description = taskItem.Description;
+            existing.Status = taskItem.Status;
+            existing.CategoryId = taskItem.CategoryId;
+            existing.PriorityId = taskItem.PriorityId;
+
+            await _dbContext.SaveChangesAsync();
+            return existing;
+        }
+
+        public async Task<TaskItem?> UpdateAsync(int id, TaskItem taskItem, List<int> tagIds)
+        {
+            var existing = await _dbContext.Tasks
+                .Include(t => t.TaskTags)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (existing == null) return null;
+
+            existing.Title = taskItem.Title;
+            existing.Description = taskItem.Description;
+            existing.Status = taskItem.Status;
+            existing.CategoryId = taskItem.CategoryId;
+            existing.PriorityId = taskItem.PriorityId;
+
+            // Update tags
+            existing.TaskTags.Clear();
+            foreach (var tagId in tagIds)
+            {
+                existing.TaskTags.Add(new TaskTag { TagId = tagId });
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return existing;
+        }
+
+        public async Task<TaskItem?> DeleteAsync(int id)
+        {
+            var task = await _dbContext.Tasks.FindAsync(id);
+            if (task == null) return null;
+
+            _dbContext.Tasks.Remove(task);
+            await _dbContext.SaveChangesAsync();
+            return task;
+        }
+    }
+}

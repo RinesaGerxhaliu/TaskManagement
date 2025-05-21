@@ -4,20 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaskManagement.Application.DTOs.TaskDTO
+namespace TaskManagement.Application.DTOs.TaskItemDTO
 {
-    public class TaskItemDto
+    public class EditTaskItem
     {
-        public int Id { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string Status { get; set; } = "ToDo";
-        public DateTime CreatedAt { get; set; }
-        public int CategoryId { get; set; }
-        public string? CategoryName { get; set; } 
 
+        public int CategoryId { get; set; }
         public int PriorityId { get; set; }
-        public string? PriorityName { get; set; }
-       
+
     }
 }
