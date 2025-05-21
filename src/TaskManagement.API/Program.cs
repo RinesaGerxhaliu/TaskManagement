@@ -32,6 +32,8 @@ builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 builder.Services.AddScoped<ITaskItemRepository, TaskItemRepository>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ITaskTagService, TaskTagService>();
+builder.Services.AddScoped<ITaskTagRepository, TaskTagRepository>();
 
 
 builder.Services.AddControllers();

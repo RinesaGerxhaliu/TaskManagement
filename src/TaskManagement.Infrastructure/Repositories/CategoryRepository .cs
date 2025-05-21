@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TaskManagement.Domain.Entities;
 using TaskManagement.Domain.Interfaces;
 using TaskManagement.Infrastructure.Data;
@@ -19,7 +17,7 @@ namespace TaskManagement.Infrastructure.Repositories
         public async Task<List<Category>> GetAllAsync()
         {
             return await _dbContext.Categories
-                .Include(c => c.Tasks) // përfshin detyrat në kategori
+                .Include(c => c.Tasks) 
                 .ToListAsync();
         }
 
@@ -43,7 +41,6 @@ namespace TaskManagement.Infrastructure.Repositories
             if (existingCategory == null) return null;
 
             existingCategory.Name = category.Name;
-            // Nëse duhen ndryshime të tjera, i bëjmë këtu
 
             await _dbContext.SaveChangesAsync();
             return existingCategory;
