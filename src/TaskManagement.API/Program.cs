@@ -44,6 +44,9 @@ builder.Services.AddScoped<ITaskItemRepository, TaskItemRepository>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITaskTagService, TaskTagService>();
+builder.Services.AddScoped<ITaskTagRepository, TaskTagRepository>();
+
 
 
 builder.Services.AddIdentityCore<User>()
