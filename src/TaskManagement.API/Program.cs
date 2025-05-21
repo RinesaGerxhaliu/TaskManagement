@@ -7,16 +7,16 @@ using TaskManagement.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure CORS policies correctly
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", builder =>
     {
-        options.AddPolicy("AllowAll",
-        builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-        builder.WithOrigins("http://localhost:3000")
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
+        builder
+            .WithOrigins("http://localhost:3000")  // Vendos domain-in frontend-it
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -33,7 +33,6 @@ builder.Services.AddScoped<ITaskItemRepository, TaskItemRepository>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -47,6 +46,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// ** Use CORS middleware here, specifying the policy name **
+app.UseCors("CorsPolicy");
 
 app.UseAuthorization();
 

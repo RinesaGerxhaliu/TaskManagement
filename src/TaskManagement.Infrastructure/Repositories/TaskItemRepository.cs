@@ -42,7 +42,6 @@ namespace TaskManagement.Infrastructure.Repositories
             _dbContext.Tasks.Add(taskItem);
             await _dbContext.SaveChangesAsync();
 
-            // Ngarko lidhjet për tu kthyer me emrat e kategorisë dhe prioritetit
             return await _dbContext.Tasks
                 .Include(t => t.Category)
                 .Include(t => t.Priority)
