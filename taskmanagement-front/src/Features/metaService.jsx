@@ -61,14 +61,14 @@ export async function getTagById(id) {
 }
 
 
-export async function createTag(tag) {
-  const res = await fetch(BASE, {
+export async function createTag(data) {
+  const response = await fetch("https://localhost:7086/api/Tags", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(tag),
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create tag");
-  return res.json();
+  if (!response.ok) throw new Error("Failed to create tag");
+  return await response.json();
 }
 
 
