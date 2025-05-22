@@ -15,7 +15,14 @@ const EditTask = () => {
 
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(""), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,11 +73,12 @@ const EditTask = () => {
         status: task.status,
         categoryId: Number(task.categoryId)
       });
-      alert("Detyra u përditësua me sukses.");
-      navigate("/");
+      const msg = "Task updated successfully!";
+      setSuccess(msg);
+      navigate("/", { state: { message: msg } });
     } catch (err) {
       console.error("Gabim gjatë ruajtjes:", err);
-      alert("Gabim gjatë ruajtjes së të dhënave.");
+      setError("Error during task update.");
     }
   };
 
@@ -98,6 +106,9 @@ const EditTask = () => {
         padding: "40px 20px"
       }}
     >
+      {success && <div className="alert alert-success">{success}</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
       <form
         onSubmit={handleSubmit}
         style={{

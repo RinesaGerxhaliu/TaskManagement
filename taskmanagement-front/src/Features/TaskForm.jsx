@@ -6,9 +6,18 @@ const TaskForm = ({ initial = {} }) => {
   const [description, setDescription] = useState(initial.description || "");
   const [categoryId, setCategoryId] = useState(initial.categoryId || "");
   const [status, setStatus] = useState(initial.status || "ToDo");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(""), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
 
   const navigate = useNavigate();
 
@@ -23,7 +32,7 @@ const TaskForm = ({ initial = {} }) => {
     e.preventDefault();
 
     if (!categoryId) {
-      alert("Please select a Category");
+      setError("Please select a category");
       return;
     }
 
@@ -46,15 +55,20 @@ const TaskForm = ({ initial = {} }) => {
 
       if (!response.ok) {
         const error = await response.json();
-        alert("Error: " + (error.message || "Failed to save task"));
+        setError("Failed to save task!");
         setLoading(false);
         return;
       }
 
-      alert(initial.id ? "Task updated successfully!" : "Task added successfully!");
-      navigate("/");
+      const msg = initial.id
+        ? "Task updated successfully!"
+        : "Task added successfully!";
+
+      setSuccess(msg);
+
+      navigate("/", { state: { message: msg } });
     } catch (err) {
-      alert("Error: " + err.message);
+      setError("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -75,6 +89,8 @@ const TaskForm = ({ initial = {} }) => {
         backgroundColor: "#f7f9fc",
       }}
     >
+      {success && <div className="alert alert-success">{success}</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
       <form
         onSubmit={handleSubmit}
         style={{

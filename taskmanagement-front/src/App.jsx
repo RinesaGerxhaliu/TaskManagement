@@ -19,7 +19,7 @@ import LoginForm from "./Components/Layout/LoginForm";
 import RegisterForm from "./Components/Layout/RegisterForm";
 
 function AppRoutes() {
-  const { user } = useAuth();  // KY DO TE FUNKSIONOJE vetem nese eshte brenda AuthProvider
+  const { user } = useAuth();
 
   if (!user) {
     return (
@@ -48,19 +48,14 @@ function AppRoutes() {
                 : <Navigate to="/" replace />
             }
           >
-            {/* When someone hits /admin → redirect to /admin/categories */}
             <Route
               index
               element={<Navigate to="categories" replace />}
             />
-
-            {/* /admin/categories */}
             <Route
               path="categories"
               element={<ManageCategories />}
             />
-
-            {/* /admin/tags */}
             <Route
               path="tags"
               element={<ManageTags />}

@@ -52,11 +52,52 @@ export async function getTags() {
   return res.json();
 }
 
+
+export async function getTagById(id) {
+  const res = await fetch(`${BASE}/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to fetch tag");
+  return res.json();
+}
+
+
+export async function createTag(tag) {
+  const res = await fetch(BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tag),
+  });
+  if (!res.ok) throw new Error("Failed to create tag");
+  return res.json();
+}
+
+
+export async function updateTag(id, tag) {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tag),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to update tag");
+  return res.json();
+}
+
+export async function deleteTag(id) {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: "DELETE",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to delete tag");
+  return res.json();
+}
+
 export async function getTaskTags(taskId) {
   const res = await fetch(`${BASE}/tasks/${taskId}/tags`);
   if (!res.ok) throw new Error("Failed loading task tags");
   return res.json();
 }
+
 
 export async function addTaskTag(taskId, tagId) {
   const res = await fetch(`${BASE}/tasks/${taskId}/tags`, {
