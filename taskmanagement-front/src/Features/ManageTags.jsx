@@ -3,58 +3,102 @@ import { getTags, createTag, updateTag, deleteTag } from "./metaService";
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa";
 
 export default function ManageTags() {
-  const [tags, setTags]       = useState([]);
+  const [tags, setTags] = useState([]);
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState(null); // { id, name }
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
+  // Auto-clear success message
   useEffect(() => {
-    (async () => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(""), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
+  // Load existing tags on mount
+  useEffect(() => {
+    async function fetchTags() {
+      setLoading(true);
       try {
-        setLoading(true);
         const all = await getTags();
-        setTags(all);
+        setTags(all.map(t => ({ id: t.id ?? t.Id, name: t.name ?? t.Name })));
       } catch (e) {
-        console.error(e);
+        setError("Failed to load tags: " + (e.message || e));
       } finally {
         setLoading(false);
       }
-    })();
+    }
+    fetchTags();
   }, []);
 
+  // Create new tag
   const handleCreate = async () => {
     if (!newName.trim()) return;
+    setActionLoading(true);
+    setError("");
     try {
       const created = await createTag({ Name: newName.trim() });
-      setTags(t => [...t, created]);
+      const tag = {
+        id: created.id ?? created.Id,
+        name: created.name ?? created.Name
+      };
+      setTags(prev => [...prev, tag]);
       setNewName("");
+      setSuccess("Tag added successfully!");
     } catch (e) {
-      console.error(e);
+      setError("Failed to create tag: " + (e.message || e));
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const startEdit = tag => setEditing({ id: tag.id, name: tag.name });
+  // Begin edit mode
+  const startEdit = (tag) => {
+    setError("");
+    setEditing({ id: tag.id, name: tag.name });
+  };
 
+  // Save edited tag
   const handleSave = async () => {
-    if (!editing.name.trim()) return;
+    if (!editing || !editing.name.trim()) return;
+    setActionLoading(true);
+    setError("");
     try {
-      const updated = await updateTag(editing.id, { Name: editing.name.trim() });
-      setTags(t => t.map(tag => tag.id === updated.id ? updated : tag));
+      await updateTag(editing.id, { Name: editing.name.trim() });
+      setTags(prev =>
+        prev.map(t => (t.id === editing.id ? { id: editing.id, name: editing.name.trim() } : t))
+      );
       setEditing(null);
+      setSuccess("Tag updated successfully!");
     } catch (e) {
-      console.error(e);
+      setError("Failed to update tag: " + (e.message || e));
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleCancel = () => setEditing(null);
+  // Cancel edit
+  const handleCancel = () => {
+    setEditing(null);
+    setError("");
+  };
 
-  const handleDelete = async id => {
+  // Delete a tag
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this tag?")) return;
+    setActionLoading(true);
+    setError("");
     try {
       await deleteTag(id);
-      setTags(t => t.filter(tag => tag.id !== id));
+      setTags(prev => prev.filter(tag => tag.id !== id));
+      setSuccess("Tag deleted successfully!");
     } catch (e) {
-      console.error(e);
+      setError("Failed to delete tag: " + (e.message || e));
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -70,17 +114,21 @@ export default function ManageTags() {
               placeholder="New tag name..."
               value={newName}
               onChange={e => setNewName(e.target.value)}
+              disabled={actionLoading}
             />
             <button
+              type="button"
               className="btn btn-light"
               onClick={handleCreate}
-              disabled={!newName.trim()}
+              disabled={!newName.trim() || actionLoading}
             >
               <FaPlus />
             </button>
           </div>
         </div>
-        <div className="card-body p-0">
+        <div className="card-body p-3">
+          {success && <div className="alert alert-success">{success}</div>}
+          {error && <div className="alert alert-danger">{error}</div>}
           <table className="table table-hover mb-0">
             <thead className="table-light">
               <tr>
@@ -90,9 +138,13 @@ export default function ManageTags() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="2" className="text-center py-4">Loading...</td></tr>
+                <tr>
+                  <td colSpan="2" className="text-center py-4">Loading...</td>
+                </tr>
               ) : tags.length === 0 ? (
-                <tr><td colSpan="2" className="text-center py-4 text-muted">No tags found.</td></tr>
+                <tr>
+                  <td colSpan="2" className="text-center py-4 text-muted">No tags found.</td>
+                </tr>
               ) : (
                 tags.map(tag => (
                   <tr key={tag.id}>
@@ -103,6 +155,7 @@ export default function ManageTags() {
                           className="form-control"
                           value={editing.name}
                           onChange={e => setEditing({ ...editing, name: e.target.value })}
+                          disabled={actionLoading}
                         />
                       ) : (
                         tag.name
@@ -112,24 +165,40 @@ export default function ManageTags() {
                       {editing?.id === tag.id ? (
                         <>
                           <button
+                            type="button"
                             className="btn btn-sm btn-success me-2"
                             onClick={handleSave}
-                          ><FaSave /></button>
+                            disabled={actionLoading}
+                          >
+                            <FaSave />
+                          </button>
                           <button
+                            type="button"
                             className="btn btn-sm btn-secondary"
                             onClick={handleCancel}
-                          ><FaTimes /></button>
+                            disabled={actionLoading}
+                          >
+                            <FaTimes />
+                          </button>
                         </>
                       ) : (
                         <>
                           <button
+                            type="button"
                             className="btn btn-sm btn-outline-primary me-2"
                             onClick={() => startEdit(tag)}
-                          ><FaEdit /></button>
+                            disabled={actionLoading}
+                          >
+                            <FaEdit />
+                          </button>
                           <button
+                            type="button"
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => handleDelete(tag.id)}
-                          ><FaTrash /></button>
+                            disabled={actionLoading}
+                          >
+                            <FaTrash />
+                          </button>
                         </>
                       )}
                     </td>
