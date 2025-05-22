@@ -20,12 +20,14 @@ namespace TaskManagement.Infrastructure.Repositories
             _dbContext = dbContext;
         }
 
-        public async Task<List<TaskItem>> GetAllAsync()
+        public async Task<List<TaskItem>> GetAllByUserAsync(string userId)
         {
             return await _dbContext.Tasks
                 .Include(t => t.Category)
+                .Where(t => t.UserId == userId)
                 .ToListAsync();
         }
+
 
         public async Task<TaskItem?> GetByIdAsync(int id)
         {

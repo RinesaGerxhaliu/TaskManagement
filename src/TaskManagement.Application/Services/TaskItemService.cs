@@ -18,11 +18,12 @@ namespace TaskManagement.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<List<TaskItemDto>> GetAllAsync()
+        public async Task<List<TaskItemDto>> GetAllByUserAsync(string userId)
         {
-            var tasks = await _taskRepo.GetAllAsync();
+            var tasks = await _taskRepo.GetAllByUserAsync(userId);
             return _mapper.Map<List<TaskItemDto>>(tasks);
         }
+
 
         public async Task<TaskItemDto?> GetByIdAsync(int id)
         {

@@ -15,12 +15,13 @@ namespace TaskManagement.API.Controllers
             _taskService = taskService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetAllByUser(string userId)
         {
-            var tasks = await _taskService.GetAllAsync();
+            var tasks = await _taskService.GetAllByUserAsync(userId);
             return Ok(tasks);
         }
+
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)

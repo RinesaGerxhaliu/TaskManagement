@@ -1,8 +1,8 @@
 const BASE = "https://localhost:7086/api";
 
-export async function getTasks() {
-  const res = await fetch(`${BASE}/TaskItem`);
-  if (!res.ok) throw new Error("Failed to fetch tasks");
+export async function getTasksByUser(userId) {
+  const res = await fetch(`${BASE}/TaskItem/user/${userId}`);
+  if (!res.ok) throw new Error("Failed to fetch tasks for user");
   return res.json();
 }
 

@@ -14,5 +14,7 @@ namespace TaskManagement.Application.DTOs.TaskItemDTO
 
         public int CategoryId { get; set; }
 
+        public string UserId { get; set; } = null!;
+
     }
 }

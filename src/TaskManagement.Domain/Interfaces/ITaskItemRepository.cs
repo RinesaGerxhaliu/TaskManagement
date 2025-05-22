@@ -9,7 +9,7 @@ namespace TaskManagement.Domain.Interfaces
 {
     public interface ITaskItemRepository
     {
-        Task<List<TaskItem>> GetAllAsync();
+        Task<List<TaskItem>> GetAllByUserAsync(string userId);
         Task<TaskItem?> GetByIdAsync(int id);
         Task<TaskItem> CreateAsync(TaskItem taskItem);
         Task<TaskItem?> UpdateAsync(int id, TaskItem taskItem);

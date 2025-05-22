@@ -14,7 +14,9 @@ namespace TaskManagement.Application.DTOs.TaskDTO
         public string Status { get; set; } = "ToDo";
         public DateTime CreatedAt { get; set; }
         public int CategoryId { get; set; }
-        public string? CategoryName { get; set; } 
-       
+        public string? CategoryName { get; set; }
+
+        public string? UserId { get; set; }
+
     }
 }

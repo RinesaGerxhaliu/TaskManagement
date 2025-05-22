@@ -15,6 +15,9 @@ namespace TaskManagement.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<TaskTag> TaskTags { get; set; } = new List<TaskTag>();
+
+        public string UserId { get; set; }
+        public User User { get; set; }
     }
 
 }

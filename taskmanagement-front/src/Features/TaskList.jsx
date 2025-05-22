@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getTasks, getCategories } from "../Features/metaService";
+import { getTasksByUser, getCategories } from "../Features/metaService";
 import TaskTagManager from "../Components/Layout/TaskTagManager";
 import { useLocation } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function TaskList() {
   const [tasks, setTasks]                 = useState([]);
@@ -18,6 +19,19 @@ export default function TaskList() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Funksion për të marrë UserId nga tokeni (nga nameidentifier)
+  function getUserIdFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+    try {
+      const decoded = jwtDecode(token);
+      // Ky key është nga JWT payload-i që dërgove më lart!
+      return decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || null;
+    } catch {
+      return null;
+    }
+  }
+
   // Auto-clear success message
   useEffect(() => {
     if (!success) return;
@@ -25,9 +39,13 @@ export default function TaskList() {
     return () => clearTimeout(timer);
   }, [success]);
 
-  // Initial load
+  // Initial load: Merr tasks vetem per userin e loguar!
   useEffect(() => {
-    getTasks().then(setTasks).catch(e => setError(e.message));
+    const userId = getUserIdFromToken();
+    if (!userId) return; // Nese nuk ekziston userId, mos e thirr API-n
+    getTasksByUser(userId)
+      .then(setTasks)
+      .catch(e => setError(e.message));
     getCategories().then(setCategories).catch(e => setError(e.message));
   }, []);
 
