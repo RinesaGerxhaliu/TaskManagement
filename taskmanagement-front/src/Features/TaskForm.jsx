@@ -29,50 +29,54 @@ const TaskForm = ({ initial = {} }) => {
   }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!categoryId) {
-      setError("Please select a category");
+  if (!categoryId) {
+    setError("Please select a category");
+    return;
+  }
+
+  const taskData = {
+    title,
+    description,
+    categoryId: Number(categoryId),
+    status,
+  };
+
+  try {
+    setLoading(true);
+
+    const token = localStorage.getItem("token"); // ✅ Get token here
+
+    const response = await fetch("https://localhost:7086/api/TaskItem", {
+      method: initial.id ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // ✅ Pass token here
+      },
+      body: JSON.stringify(taskData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      setError("Failed to save task!");
+      setLoading(false);
       return;
     }
 
-    const taskData = {
-      title,
-      description,
-      categoryId: Number(categoryId),
-      status,
-    };
+    const msg = initial.id
+      ? "Task updated successfully!"
+      : "Task added successfully!";
 
-    try {
-      setLoading(true);
-      const response = await fetch("https://localhost:7086/api/TaskItem", {
-        method: initial.id ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(taskData),
-      });
+    setSuccess(msg);
+    navigate("/", { state: { message: msg } });
+  } catch (err) {
+    setError("Error: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      if (!response.ok) {
-        const error = await response.json();
-        setError("Failed to save task!");
-        setLoading(false);
-        return;
-      }
-
-      const msg = initial.id
-        ? "Task updated successfully!"
-        : "Task added successfully!";
-
-      setSuccess(msg);
-
-      navigate("/", { state: { message: msg } });
-    } catch (err) {
-      setError("Error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCancel = () => {
     navigate("/");

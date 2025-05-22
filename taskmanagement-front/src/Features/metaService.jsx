@@ -6,15 +6,19 @@ export async function getTasksByUser(userId) {
   return res.json();
 }
 
-export async function createTask(task) {
-  const res = await fetch(`${BASE}/TaskItem`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(task),
-  });
-  if (!res.ok) throw new Error("Failed to create task");
-  return res.json();
-}
+ export async function createTask(task) {
+  const token = localStorage.getItem("token");
+   const res = await fetch(`${BASE}/TaskItem`, {
+     method: "POST",
+     headers: {
+       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+     },
+     body: JSON.stringify(task),
+   });
+   if (!res.ok) throw new Error("Failed to create task");
+   return res.json();
+ }
 
 export async function updateTask(id, task) {
   const res = await fetch(`${BASE}/TaskItem/${id}`, {
@@ -98,7 +102,6 @@ export async function getTaskTags(taskId) {
   return res.json();
 }
 
-
 export async function addTaskTag(taskId, tagId) {
   const res = await fetch(`${BASE}/tasks/${taskId}/tags`, {
     method: "POST",
@@ -114,5 +117,46 @@ export async function removeTaskTag(taskId, tagId) {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed removing tag from task");
+}
+
+/** Get category by ID */
+export async function getCategoryById(id) {
+  const res = await fetch(`${BASE}/Category/${id}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to fetch category");
+  return res.json();
+}
+
+/** Create a new category */
+export async function createCategory(data) {
+  const res = await fetch(`${BASE}/Category`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create category");
+  return res.json();
+}
+
+/** Update an existing category */
+export async function updateCategory(id, data) {
+  const res = await fetch(`${BASE}/Category/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to update category");
+  return res.json();
+}
+
+/** Delete a category */
+export async function deleteCategory(id) {
+  const res = await fetch(`${BASE}/Category/${id}`, {
+    method: "DELETE",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to delete category");
+  return res.json();
 }
 

@@ -12,7 +12,7 @@ namespace TaskManagement.Application.Interfaces
     {
         Task<List<TaskItemDto>> GetAllByUserAsync(string userId);
         Task<TaskItemDto?> GetByIdAsync(int id);
-        Task<TaskItemDto> CreateAsync(AddTaskItem addTask);
+        Task<TaskItemDto> CreateAsync(AddTaskItem addTask, string userId);
         Task<TaskItemDto?> UpdateAsync(int id, EditTaskItem editTask);
         Task<TaskItemDto?> DeleteAsync(int id);
     }

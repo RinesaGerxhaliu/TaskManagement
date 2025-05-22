@@ -31,12 +31,14 @@ namespace TaskManagement.Application.Services
             return task == null ? null : _mapper.Map<TaskItemDto>(task);
         }
 
-        public async Task<TaskItemDto> CreateAsync(AddTaskItem addTask)
+        public async Task<TaskItemDto> CreateAsync(AddTaskItem addTask, string userId)
         {
             var entity = _mapper.Map<TaskItem>(addTask);
-            var created = await _taskRepo.CreateAsync(entity); 
+            entity.UserId = userId; // <-- Set user ID here
+            var created = await _taskRepo.CreateAsync(entity);
             return _mapper.Map<TaskItemDto>(created);
         }
+
 
         public async Task<TaskItemDto?> UpdateAsync(int id, EditTaskItem editTask)
         {

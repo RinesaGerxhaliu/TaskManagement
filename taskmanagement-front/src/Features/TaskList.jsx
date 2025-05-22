@@ -43,10 +43,29 @@ export default function TaskList() {
   useEffect(() => {
     const userId = getUserIdFromToken();
     if (!userId) return; // Nese nuk ekziston userId, mos e thirr API-n
-    getTasksByUser(userId)
-      .then(setTasks)
-      .catch(e => setError(e.message));
-    getCategories().then(setCategories).catch(e => setError(e.message));
+    const token = localStorage.getItem("token");
+  fetch(`https://localhost:7086/api/TaskItem/user/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    })
+    .then(setTasks)
+    .catch(e => setError(e.message));
+    fetch(`https://localhost:7086/api/Category`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    })
+    .then(setCategories)
+    .catch(e => setError(e.message));
   }, []);
 
   // Read navigation state
@@ -70,10 +89,16 @@ export default function TaskList() {
   const handleDeleteTask = async () => {
     if (confirmTaskId == null) return;
     try {
-      const res = await fetch(
-        `https://localhost:7086/api/TaskItem/${confirmTaskId}`,
-        { method: "DELETE" }
-      );
+      const token = localStorage.getItem("token");
+    const res = await fetch(
+      `https://localhost:7086/api/TaskItem/${confirmTaskId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
       if (!res.ok) throw new Error("Delete failed");
       setTasks(prev => prev.filter(t => t.id !== confirmTaskId));
       setSuccess("Task deleted successfully!");
