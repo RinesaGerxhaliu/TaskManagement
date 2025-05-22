@@ -143,7 +143,7 @@ export default function TaskList() {
       {/* Table */}
       <div className="table-responsive">
         <table className="table table-striped">
-          <thead className="table-primary text-center">
+          <thead className="table-primary text-center align-middle">
             <tr>
               <th>Title</th>
               <th>Category</th>
@@ -155,7 +155,7 @@ export default function TaskList() {
               <th>Delete</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-center align-middle">
             {filteredTasks.length === 0 ? (
               <tr>
                 <td colSpan="8" className="text-center py-4 text-muted">No tasks found.</td>
