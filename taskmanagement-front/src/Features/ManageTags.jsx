@@ -10,6 +10,8 @@ export default function ManageTags() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmTagId, setConfirmTagId] = useState(null);
 
   // Auto-clear success message
   useEffect(() => {
@@ -40,6 +42,7 @@ export default function ManageTags() {
     setActionLoading(true);
     setError("");
     try {
+      // Change Name to name if backend expects that
       const created = await createTag({ Name: newName.trim() });
       const tag = {
         id: created.id ?? created.Id,
@@ -86,19 +89,26 @@ export default function ManageTags() {
     setError("");
   };
 
+  // Ask for confirmation
+  const confirmDelete = (id) => {
+    setConfirmTagId(id);
+    setShowConfirm(true);
+  };
+
   // Delete a tag
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this tag?")) return;
+  const handleDelete = async () => {
     setActionLoading(true);
     setError("");
     try {
-      await deleteTag(id);
-      setTags(prev => prev.filter(tag => tag.id !== id));
+      await deleteTag(confirmTagId);
+      setTags(prev => prev.filter(tag => tag.id !== confirmTagId));
       setSuccess("Tag deleted successfully!");
     } catch (e) {
       setError("Failed to delete tag: " + (e.message || e));
     } finally {
       setActionLoading(false);
+      setShowConfirm(false);
+      setConfirmTagId(null);
     }
   };
 
@@ -129,6 +139,32 @@ export default function ManageTags() {
         <div className="card-body p-3">
           {success && <div className="alert alert-success">{success}</div>}
           {error && <div className="alert alert-danger">{error}</div>}
+
+          {/* Custom delete confirm alert */}
+          {showConfirm && (
+            <div className="alert alert-warning d-flex justify-content-between align-items-center">
+              <span>
+                Are you sure you want to delete this tag?
+              </span>
+              <div>
+                <button
+                  className="btn btn-danger btn-sm me-2"
+                  onClick={handleDelete}
+                  disabled={actionLoading}
+                >
+                  Delete
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowConfirm(false)}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           <table className="table table-hover mb-0">
             <thead className="table-light">
               <tr>
@@ -194,8 +230,8 @@ export default function ManageTags() {
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => handleDelete(tag.id)}
-                            disabled={actionLoading}
+                            onClick={() => confirmDelete(tag.id)}
+                            disabled={actionLoading || showConfirm}
                           >
                             <FaTrash />
                           </button>
