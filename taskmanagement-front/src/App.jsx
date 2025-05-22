@@ -11,6 +11,8 @@ import TaskList from "./Features/TaskList";
 import TaskForm from "./Features/TaskForm";
 import EditTask from "./Features/EditTasks";
 import AdminDashboard from "./Features/AdminDashboard";
+import ManageCategories from "./Features/ManageCategories";
+import ManageTags from "./Features/ManageTags";
 
 import { AuthProvider, useAuth } from "./Components/Layout/AuthContext";
 import LoginForm from "./Components/Layout/LoginForm";
@@ -39,9 +41,31 @@ function AppRoutes() {
           <Route path="/add" element={<TaskForm />} />
           <Route path="/edit/:id" element={<EditTask />} />
           <Route
-            path="/admin"
-            element={user.isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />}
-          />
+            path="/admin/*"
+            element={
+              user.isAdmin
+                ? <AdminDashboard />
+                : <Navigate to="/" replace />
+            }
+          >
+            {/* When someone hits /admin → redirect to /admin/categories */}
+            <Route
+              index
+              element={<Navigate to="categories" replace />}
+            />
+
+            {/* /admin/categories */}
+            <Route
+              path="categories"
+              element={<ManageCategories />}
+            />
+
+            {/* /admin/tags */}
+            <Route
+              path="tags"
+              element={<ManageTags />}
+            />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
