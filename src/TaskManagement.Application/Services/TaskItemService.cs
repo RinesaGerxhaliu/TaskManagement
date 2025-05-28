@@ -24,7 +24,6 @@ namespace TaskManagement.Application.Services
             return _mapper.Map<List<TaskItemDto>>(tasks);
         }
 
-
         public async Task<TaskItemDto?> GetByIdAsync(int id)
         {
             var task = await _taskRepo.GetByIdAsync(id);
@@ -33,25 +32,43 @@ namespace TaskManagement.Application.Services
 
         public async Task<TaskItemDto> CreateAsync(AddTaskItem addTask, string userId)
         {
+            if (string.IsNullOrWhiteSpace(addTask.Title))
+                throw new ArgumentException("Title is required");
+
             var entity = _mapper.Map<TaskItem>(addTask);
-            entity.UserId = userId; // <-- Set user ID here
+            entity.UserId = userId;
+            entity.CreatedAt = DateTime.UtcNow;
+
             var created = await _taskRepo.CreateAsync(entity);
             return _mapper.Map<TaskItemDto>(created);
         }
 
-
         public async Task<TaskItemDto?> UpdateAsync(int id, EditTaskItem editTask)
         {
-            var entity = _mapper.Map<TaskItem>(editTask);
-            var updated = await _taskRepo.UpdateAsync(id, entity); 
+            var existing = await _taskRepo.GetByIdAsync(id);
+            if (existing == null)
+                return null;
+
+            if (string.IsNullOrWhiteSpace(editTask.Title))
+                throw new ArgumentException("Title is required");
+
+            existing.Title = editTask.Title;
+            existing.Description = editTask.Description;
+            existing.Status = editTask.Status;
+            existing.CategoryId = editTask.CategoryId;
+
+            var updated = await _taskRepo.UpdateAsync(id, existing);
             return updated == null ? null : _mapper.Map<TaskItemDto>(updated);
         }
 
         public async Task<TaskItemDto?> DeleteAsync(int id)
         {
+            var existing = await _taskRepo.GetByIdAsync(id);
+            if (existing == null)
+                return null;
+
             var deleted = await _taskRepo.DeleteAsync(id);
-            return deleted == null ? null : _mapper.Map<TaskItemDto>(deleted);
+            return _mapper.Map<TaskItemDto?>(deleted);
         }
     }
-
 }

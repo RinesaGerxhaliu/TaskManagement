@@ -24,12 +24,12 @@ namespace TaskManagement.API.Controllers
             return Ok(tasks);
         }
 
-
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var task = await _taskService.GetByIdAsync(id);
-            if (task == null) return NotFound();
+            if (task == null)
+                return NotFound("Task not found.");
             return Ok(task);
         }
 
@@ -37,31 +37,50 @@ namespace TaskManagement.API.Controllers
         [Authorize]
         public async Task<IActionResult> Create([FromBody] AddTaskItem addTaskItem)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
-                return Unauthorized();
+                return Unauthorized("User ID not found.");
 
-            var created = await _taskService.CreateAsync(addTaskItem, userId);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var created = await _taskService.CreateAsync(addTaskItem, userId);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return Conflict("Task already exists.");
+            }
         }
-
-
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] EditTaskItem editTaskItem)
         {
-            var updated = await _taskService.UpdateAsync(id, editTaskItem);
-            if (updated == null) return NotFound();
-            return Ok(updated);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var updated = await _taskService.UpdateAsync(id, editTaskItem);
+                if (updated == null)
+                    return NotFound("Task not found.");
+                return Ok(updated);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return Conflict("Task already exists.");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _taskService.DeleteAsync(id);
-            if (deleted == null) return NotFound();
+            if (deleted == null)
+                return NotFound("Task not found.");
             return Ok(deleted);
         }
     }
 }
-

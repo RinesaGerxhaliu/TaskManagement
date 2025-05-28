@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+const MAX_TITLE_LENGTH = 100;
+const MIN_TITLE_LENGTH = 1;
+const MAX_DESCRIPTION_LENGTH = 500;
+const VALID_STATUSES = ["ToDo", "InProgress", "Done"];
+
 const TaskForm = ({ initial = {} }) => {
   const [title, setTitle] = useState(initial.title || "");
   const [description, setDescription] = useState(initial.description || "");
@@ -8,18 +13,41 @@ const TaskForm = ({ initial = {} }) => {
   const [status, setStatus] = useState(initial.status || "ToDo");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => setSuccess(""), 4000);
-    return () => clearTimeout(timer);
-  }, [success]);
-
+  const [testResults, setTestResults] = useState([]);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (success) {
+      setTestResults((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          description: "Task submission",
+          status: "Pass",
+          message: success,
+        },
+      ]);
+      const timer = setTimeout(() => setSuccess(""), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      setTestResults((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          description: "Task submission",
+          status: "Fail",
+          message: error,
+        },
+      ]);
+    }
+  }, [error]);
 
   useEffect(() => {
     fetch("https://localhost:7086/api/Category")
@@ -28,59 +56,87 @@ const TaskForm = ({ initial = {} }) => {
       .catch(console.error);
   }, []);
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  const validate = () => {
+    if (!title.trim()) return "Title is required.";
+    if (title.trim().length < MIN_TITLE_LENGTH)
+      return `Title must be at least ${MIN_TITLE_LENGTH} character(s).`;
+    if (title.trim().length > MAX_TITLE_LENGTH)
+      return `Title cannot exceed ${MAX_TITLE_LENGTH} characters.`;
 
-  if (!categoryId) {
-    setError("Please select a category");
-    return;
-  }
+    if (description.trim().length > MAX_DESCRIPTION_LENGTH)
+      return `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters.`;
 
-  const taskData = {
-    title,
-    description,
-    categoryId: Number(categoryId),
-    status,
+    if (!VALID_STATUSES.includes(status))
+      return `Status must be one of: ${VALID_STATUSES.join(", ")}.`;
+
+    if (!categoryId || isNaN(Number(categoryId)) || Number(categoryId) <= 0)
+      return "Please select a valid category.";
+
+    return null; // no errors
   };
 
-  try {
-    setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const token = localStorage.getItem("token"); // ✅ Get token here
+    setError("");
+    setSuccess("");
 
-    const response = await fetch("https://localhost:7086/api/TaskItem", {
-      method: initial.id ? "PUT" : "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // ✅ Pass token here
-      },
-      body: JSON.stringify(taskData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      setError("Failed to save task!");
-      setLoading(false);
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    const msg = initial.id
-      ? "Task updated successfully!"
-      : "Task added successfully!";
+    const taskData = {
+      title: title.trim(),
+      description: description.trim(),
+      categoryId: Number(categoryId),
+      status: status.trim(),
+    };
 
-    setSuccess(msg);
-    navigate("/", { state: { message: msg } });
-  } catch (err) {
-    setError("Error: " + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
 
+      const response = await fetch("https://localhost:7086/api/TaskItem", {
+        method: initial.id ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(taskData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const message =
+          errorData?.message ||
+          (response.status === 400
+            ? "Validation failed."
+            : "Failed to save task!");
+        setError(message);
+        setLoading(false);
+        return;
+      }
+
+      const msg = initial.id
+        ? "Task updated successfully!"
+        : "Task added successfully!";
+      setSuccess(msg);
+      navigate("/", { state: { message: msg } });
+    } catch (err) {
+      setError("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => {
     navigate("/");
   };
+
+  // Kontrolli i validitetit për çaktivizim butoni
+  const isFormValid = !validate();
 
   return (
     <div
@@ -91,10 +147,9 @@ const TaskForm = ({ initial = {} }) => {
         alignItems: "center",
         padding: "40px 20px",
         backgroundColor: "#f7f9fc",
+        flexDirection: "column",
       }}
     >
-      {success && <div className="alert alert-success">{success}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
       <form
         onSubmit={handleSubmit}
         style={{
@@ -106,68 +161,69 @@ const TaskForm = ({ initial = {} }) => {
           boxShadow: "0 10px 30px rgba(0, 0, 0, 0.1)",
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           color: "#1F3A93",
+          marginBottom: "30px",
         }}
       >
         <h2 className="mb-4 text-center" style={{ color: "#1F3A93" }}>
           {initial.id ? "Edit Task" : "Add Task"}
         </h2>
 
+        {error && (
+          <div className="alert alert-danger text-center" role="alert">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success text-center" role="alert">
+            {success}
+          </div>
+        )}
+
         <div className="mb-3">
-          <label htmlFor="title" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="title" className="form-label fw-semibold">
             Title
           </label>
           <input
             id="title"
+            data-testid="task-title"
             className="form-control"
             placeholder="Enter task title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            required
+            maxLength={MAX_TITLE_LENGTH}
             autoFocus
-            style={{
-              borderColor: "#357ABD",
-              boxShadow: "0 0 5px #4A90E2",
-              transition: "border-color 0.3s ease",
-            }}
             disabled={loading}
           />
         </div>
 
         <div className="mb-3">
-          <label htmlFor="description" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="description" className="form-label fw-semibold">
             Description
           </label>
           <textarea
             id="description"
+            data-testid="task-description"
             className="form-control"
             placeholder="Enter task description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            style={{
-              borderColor: "#357ABD",
-              boxShadow: "0 0 5px #4A90E2",
-              transition: "border-color 0.3s ease",
-            }}
+            maxLength={MAX_DESCRIPTION_LENGTH}
             disabled={loading}
           />
         </div>
 
         <div className="mb-3">
-          <label htmlFor="category" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="category" className="form-label fw-semibold">
             Category
           </label>
           <select
             id="category"
+            data-testid="task-category"
             className="form-select"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            required
-            style={{
-              borderColor: "#357ABD",
-              boxShadow: "0 0 5px #4A90E2",
-              transition: "border-color 0.3s ease",
-            }}
             disabled={loading}
           >
             <option value="">-- Select Category --</option>
@@ -180,19 +236,15 @@ const TaskForm = ({ initial = {} }) => {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="status" className="form-label fw-semibold" style={{ color: "#1F3A93" }}>
+          <label htmlFor="status" className="form-label fw-semibold">
             Status
           </label>
           <select
             id="status"
+            data-testid="task-status"
             className="form-select"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            style={{
-              borderColor: "#357ABD",
-              boxShadow: "0 0 5px #4A90E2",
-              transition: "border-color 0.3s ease",
-            }}
             disabled={loading}
           >
             <option value="ToDo">To Do</option>
@@ -201,35 +253,65 @@ const TaskForm = ({ initial = {} }) => {
           </select>
         </div>
 
-        <div className="d-flex justify-content-center gap-3 mt-4" style={{ gap: "20px" }}>
+        <div className="d-flex justify-content-center gap-3 mt-4">
           <button
             type="submit"
+            data-testid="submit-task"
             className="btn btn-primary px-4"
-            style={{
-              backgroundColor: "#357ABD",
-              borderColor: "#2E67B1",
-              fontWeight: "600",
-              boxShadow: "0 3px 8px rgba(53, 122, 189, 0.6)",
-            }}
-            disabled={loading}
+            disabled={loading || !isFormValid}
           >
             {loading ? (initial.id ? "Saving..." : "Adding...") : "Save"}
           </button>
           <button
             type="button"
+            data-testid="cancel-task"
             className="btn btn-outline-secondary px-4"
             onClick={handleCancel}
-            style={{
-              fontWeight: "600",
-              color: "#357ABD",
-              borderColor: "#357ABD",
-            }}
             disabled={loading}
           >
             Cancel
           </button>
         </div>
       </form>
+
+      {/* Test Results */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "600px",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          color: "#1F3A93",
+        }}
+      >
+        <h4>Test Results:</h4>
+        <table className="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody>
+            {testResults.map((test) => (
+              <tr key={test.id}>
+                <td>{test.id}</td>
+                <td>{test.description}</td>
+                <td
+                  style={{
+                    color: test.status === "Pass" ? "green" : "red",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {test.status}
+                </td>
+                <td>{test.message}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
