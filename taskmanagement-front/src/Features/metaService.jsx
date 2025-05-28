@@ -58,41 +58,63 @@ export async function getTags() {
 
 
 export async function getTagById(id) {
-  const res = await fetch(`${BASE}/${id}`);
+  const res = await fetch(`${BASE}/Tags/${id}`);
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to fetch tag");
+  if (!res.ok) {
+    const text = await res.text().catch(() => null);
+    const error = new Error(text || "Failed to fetch tag");
+    error.status = res.status;
+    throw error;
+  }
   return res.json();
 }
 
 
 export async function createTag(data) {
-  const response = await fetch("https://localhost:7086/api/Tags", {
+  const res = await fetch(`${BASE}/Tags`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error("Failed to create tag");
-  return await response.json();
+  const text = await res.text();
+  if (!res.ok) {
+    const error = new Error(text || "Failed to create tag");
+    error.status = res.status;
+    throw error;
+  }
+  return JSON.parse(text);
 }
 
 
 export async function updateTag(id, tag) {
-  const res = await fetch(`${BASE}/${id}`, {
+  const res = await fetch(`${BASE}/Tags/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(tag),
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to update tag");
-  return res.json();
+
+  const text = await res.text();
+  if (!res.ok) {
+    const error = new Error(text || "Failed to update tag");
+    error.status = res.status;
+    throw error;
+  }
+  return JSON.parse(text);
 }
 
 export async function deleteTag(id) {
-  const res = await fetch(`${BASE}/${id}`, {
+  const res = await fetch(`${BASE}/Tags/${id}`, {
     method: "DELETE",
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error("Failed to delete tag");
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => null);
+    const error = new Error(text || "Failed to delete tag");
+    error.status = res.status;
+    throw error;
+  }
   return res.json();
 }
 

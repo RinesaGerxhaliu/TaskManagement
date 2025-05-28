@@ -10,6 +10,8 @@ namespace TaskManagement.Infrastructure.Repositories
         private readonly TaskManagementDbContext _ctx;
         public TagRepository(TaskManagementDbContext ctx) => _ctx = ctx;
 
+        public async Task<bool> ExistsByNameAsync(string name) =>
+        await _ctx.Tags.AnyAsync(t => t.Name == name);
         public async Task<List<Tag>> GetAllAsync() =>
             await _ctx.Tags.AsNoTracking().ToListAsync();
 

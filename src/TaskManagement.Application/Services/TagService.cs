@@ -31,6 +31,10 @@ namespace TaskManagement.Application.Services
 
         public async Task<TagDto> CreateAsync(AddTagDto dto)
         {
+            // → Kontrolli i duplicate
+            if (await _tagRepository.ExistsByNameAsync(dto.Name))
+                throw new InvalidOperationException("Tag already exists");
+
             var tag = _mapper.Map<Tag>(dto);
             var created = await _tagRepository.CreateAsync(tag);
             return _mapper.Map<TagDto>(created);
@@ -40,6 +44,11 @@ namespace TaskManagement.Application.Services
         {
             var existing = await _tagRepository.GetByIdAsync(id);
             if (existing == null) return null;
+
+            // → Kontrolli i duplicate për emër të ri
+            var nameTaken = await _tagRepository.ExistsByNameAsync(dto.Name);
+            if (nameTaken && !string.Equals(existing.Name, dto.Name, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Tag already exists");
 
             _mapper.Map(dto, existing);
             var updated = await _tagRepository.UpdateAsync(id, existing);

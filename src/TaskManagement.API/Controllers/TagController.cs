@@ -34,17 +34,38 @@ namespace TaskManagement.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] AddTagDto addTag)
         {
-            var created = await _tagService.CreateAsync(addTag);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            try
+            {
+                var created = await _tagService.CreateAsync(addTag);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                // return 409 with only the simple message
+                return Conflict("Tag already exists!");
+            }
         }
+
 
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update([FromRoute] int id, [FromBody] EditTagDto editTag)
         {
-            var updated = await _tagService.UpdateAsync(id, editTag);
-            if (updated == null)
-                return NotFound();
-            return Ok(updated);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var updated = await _tagService.UpdateAsync(id, editTag);
+                if (updated == null)
+                    return NotFound();
+                return Ok(updated);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+            {
+                return Conflict("Tag already exists!");
+            }
         }
 
         [HttpDelete("{id:int}")]

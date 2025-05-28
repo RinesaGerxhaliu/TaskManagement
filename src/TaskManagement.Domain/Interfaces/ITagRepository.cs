@@ -9,6 +9,7 @@ namespace TaskManagement.Domain.Interfaces
 {
     public interface ITagRepository
     {
+        Task<bool> ExistsByNameAsync(string name);
         Task<List<Tag>> GetAllAsync();
         Task<Tag?> GetByIdAsync(int id);
         Task<Tag> CreateAsync(Tag tag);

@@ -42,7 +42,6 @@ export default function ManageTags() {
     setActionLoading(true);
     setError("");
     try {
-      // Change Name to name if backend expects that
       const created = await createTag({ Name: newName.trim() });
       const tag = {
         id: created.id ?? created.Id,
@@ -59,7 +58,7 @@ export default function ManageTags() {
   };
 
   // Begin edit mode
-  const startEdit = (tag) => {
+  const startEdit = tag => {
     setError("");
     setEditing({ id: tag.id, name: tag.name });
   };
@@ -72,7 +71,9 @@ export default function ManageTags() {
     try {
       await updateTag(editing.id, { Name: editing.name.trim() });
       setTags(prev =>
-        prev.map(t => (t.id === editing.id ? { id: editing.id, name: editing.name.trim() } : t))
+        prev.map(t =>
+          t.id === editing.id ? { id: editing.id, name: editing.name.trim() } : t
+        )
       );
       setEditing(null);
       setSuccess("Tag updated successfully!");
@@ -90,7 +91,7 @@ export default function ManageTags() {
   };
 
   // Ask for confirmation
-  const confirmDelete = (id) => {
+  const confirmDelete = id => {
     setConfirmTagId(id);
     setShowConfirm(true);
   };
@@ -115,22 +116,28 @@ export default function ManageTags() {
   return (
     <div className="container my-5">
       <div className="card shadow-sm">
-        <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <div
+          className="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+          data-testid="new-tag-section"
+        >
           <h5 className="mb-0">Manage Tags</h5>
           <div className="input-group w-50">
             <input
               type="text"
               className="form-control"
+              maxLength={50}
               placeholder="New tag name..."
               value={newName}
               onChange={e => setNewName(e.target.value)}
               disabled={actionLoading}
+              data-testid="new-tag-input"
             />
             <button
               type="button"
               className="btn btn-light"
               onClick={handleCreate}
               disabled={!newName.trim() || actionLoading}
+              data-testid="new-tag-btn"
             >
               <FaPlus />
             </button>
@@ -143,14 +150,13 @@ export default function ManageTags() {
           {/* Custom delete confirm alert */}
           {showConfirm && (
             <div className="alert alert-warning d-flex justify-content-between align-items-center">
-              <span>
-                Are you sure you want to delete this tag?
-              </span>
+              <span>Are you sure you want to delete this tag?</span>
               <div>
                 <button
                   className="btn btn-danger btn-sm me-2"
                   onClick={handleDelete}
                   disabled={actionLoading}
+                  data-testid="confirm-delete-btn"
                 >
                   Delete
                 </button>
@@ -158,6 +164,7 @@ export default function ManageTags() {
                   className="btn btn-secondary btn-sm"
                   onClick={() => setShowConfirm(false)}
                   disabled={actionLoading}
+                  data-testid="cancel-confirm-btn"
                 >
                   Cancel
                 </button>
@@ -175,23 +182,29 @@ export default function ManageTags() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="2" className="text-center py-4">Loading...</td>
+                  <td colSpan="2" className="text-center py-4">
+                    Loading...
+                  </td>
                 </tr>
               ) : tags.length === 0 ? (
                 <tr>
-                  <td colSpan="2" className="text-center py-4 text-muted">No tags found.</td>
+                  <td colSpan="2" className="text-center py-4 text-muted">
+                    No tags found.
+                  </td>
                 </tr>
               ) : (
                 tags.map(tag => (
-                  <tr key={tag.id}>
+                  <tr key={tag.id} data-testid={`tag-row-${tag.id}`}>
                     <td className="align-middle">
                       {editing?.id === tag.id ? (
                         <input
                           type="text"
                           className="form-control"
+                          maxLength={50}
                           value={editing.name}
                           onChange={e => setEditing({ ...editing, name: e.target.value })}
                           disabled={actionLoading}
+                          data-testid="edit-tag-input"
                         />
                       ) : (
                         tag.name
@@ -205,6 +218,7 @@ export default function ManageTags() {
                             className="btn btn-sm btn-success me-2"
                             onClick={handleSave}
                             disabled={actionLoading}
+                            data-testid="save-tag-btn"
                           >
                             <FaSave />
                           </button>
@@ -213,6 +227,7 @@ export default function ManageTags() {
                             className="btn btn-sm btn-secondary"
                             onClick={handleCancel}
                             disabled={actionLoading}
+                            data-testid="cancel-edit-btn"
                           >
                             <FaTimes />
                           </button>
@@ -224,6 +239,7 @@ export default function ManageTags() {
                             className="btn btn-sm btn-outline-primary me-2"
                             onClick={() => startEdit(tag)}
                             disabled={actionLoading}
+                            data-testid={`edit-btn-${tag.id}`}
                           >
                             <FaEdit />
                           </button>
@@ -232,6 +248,7 @@ export default function ManageTags() {
                             className="btn btn-sm btn-outline-danger"
                             onClick={() => confirmDelete(tag.id)}
                             disabled={actionLoading || showConfirm}
+                            data-testid={`delete-btn-${tag.id}`}
                           >
                             <FaTrash />
                           </button>
@@ -241,7 +258,7 @@ export default function ManageTags() {
                   </tr>
                 ))
               )}
-            </tbody>
+            </tbody>  
           </table>
         </div>
       </div>
