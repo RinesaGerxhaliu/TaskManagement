@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
+using TaskManagement.UI.Tests.TestDTOs;
 
 namespace TaskManagement.UI.Tests
 {
@@ -58,6 +59,26 @@ namespace TaskManagement.UI.Tests
                 d.FindElement(By.CssSelector("[data-testid='new-tag-input']"))
             );
 
+            // GET ALL
+            var apiTags = await http.GetFromJsonAsync<List<TagDto>>(
+                // adjust if your TagsController is under /api/Tags
+                "https://localhost:7086/api/Tags"
+            ) ?? new List<TagDto>();
+
+            _wait.Until(d =>
+                d.FindElements(By.CssSelector("tr[data-testid^='tag-row-']")).Count
+                  >= apiTags.Count
+            );
+
+            var uiRows = Driver.FindElements(By.CssSelector("tr[data-testid^='tag-row-']"));
+            Assert.AreEqual(
+                apiTags.Count,
+                uiRows.Count,
+                $"Expected {apiTags.Count} tags from API, but saw {uiRows.Count} in the UI"
+            );
+
+            // CREATE
+
             const string newTagName = "SeleniumTestTag";
             var newNameInput = Driver.FindElement(By.CssSelector("[data-testid='new-tag-input']"));
             newNameInput.SendKeys(newTagName);
@@ -77,6 +98,7 @@ namespace TaskManagement.UI.Tests
             Assert.AreEqual(newTagName, createdRow.Text,
                 "After creation, the tag text should exactly match.");
 
+            // UPDATE
 
             Driver.FindElement(By.CssSelector($"[data-testid='edit-btn-{tagId}']")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='edit-tag-input']")));
@@ -90,6 +112,7 @@ namespace TaskManagement.UI.Tests
             );
             Assert.IsTrue(Driver.PageSource.Contains("EditedSeleniumTag"));
 
+            // DELETE
 
             Driver.FindElement(By.CssSelector($"[data-testid='delete-btn-{tagId}']")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='confirm-delete-btn']"))).Click();
