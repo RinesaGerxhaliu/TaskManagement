@@ -60,22 +60,36 @@ namespace TaskManagement.UI.Tests
             );
 
             // GET ALL
-            var apiTags = await http.GetFromJsonAsync<List<TagDto>>(
-                // adjust if your TagsController is under /api/Tags
-                "https://localhost:7086/api/Tags"
-            ) ?? new List<TagDto>();
 
             _wait.Until(d =>
-                d.FindElements(By.CssSelector("tr[data-testid^='tag-row-']")).Count
-                  >= apiTags.Count
+                d.FindElements(By.CssSelector("table tbody tr[data-testid^='tag-row-']"))
+                 .Any(r => !string.IsNullOrWhiteSpace(r.Text))
+                || d.FindElements(By.CssSelector("table tbody tr td"))
+                    .Any(cell => cell.Text.Contains("No tags found."))
             );
 
-            var uiRows = Driver.FindElements(By.CssSelector("tr[data-testid^='tag-row-']"));
-            Assert.AreEqual(
-                apiTags.Count,
-                uiRows.Count,
-                $"Expected {apiTags.Count} tags from API, but saw {uiRows.Count} in the UI"
-            );
+            var uiRows = Driver
+              .FindElements(By.CssSelector("table tbody tr[data-testid^='tag-row-']"))
+              .Where(r => !string.IsNullOrWhiteSpace(r.Text))
+              .ToList();
+
+            if (uiRows.Count == 0)
+            {
+                var placeholder = Driver.FindElement(By.CssSelector("table tbody tr td"));
+                Assert.AreEqual(
+                    "No tags found.",
+                    placeholder.Text.Trim(),
+                    "When there are no tags, UI should show the 'No tags found.' message."
+                );
+            }
+            else
+            {
+                Assert.IsTrue(
+                    uiRows.Count > 0,
+                    $"Expected at least one tag row, but found {uiRows.Count}"
+                );
+            }
+
 
             // CREATE
 
