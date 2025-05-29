@@ -1,137 +1,106 @@
 ﻿using System.Net.Http.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
-using TaskManagement.UI.Tests.TestDTOs;
 
 namespace TaskManagement.UI.Tests
 {
     public class LoginResponseDTO
     {
-        public string JwtToken { get; set; } = "";
+        public string JwtToken { get; set; } = string.Empty;
     }
 
     [TestFixture]
-    public class TagCrudTests : BaseTest
+    public class TagTests : BaseTest
     {
         private const string ApiBase = "https://localhost:7086/api/Auth";
         private const string LoginUrl = "http://localhost:3000/login";
         private WebDriverWait _wait;
 
         [SetUp]
-        public void Init()
+        public void Setup()
         {
             _wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(5));
         }
 
-        [Test]
-        public async Task Create_Read_Update_Delete_Tag_Via_UI_Login()
+        private void LoginAsAdmin()
         {
             var adminEmail = Environment.GetEnvironmentVariable("ADMIN_EMAIL")
                                   ?? throw new InvalidOperationException("Set ADMIN_EMAIL");
             var adminPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD")
                                   ?? throw new InvalidOperationException("Set ADMIN_PASSWORD");
 
-            using var http = new HttpClient();
-
-            await http.PostAsJsonAsync(
-                $"{ApiBase}/Register",
-                new { Username = adminEmail, Password = adminPassword, Roles = new[] { "Admin" } }
-            );
-
             Driver.Navigate().GoToUrl(LoginUrl);
-            _wait.Until(d =>
-                d.FindElement(By.CssSelector("input[placeholder='Email']"))
-            );
-
-            Driver.FindElement(By.CssSelector("input[placeholder='Email']"))
-                  .SendKeys(adminEmail);
+            _wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Email']")))
+                 .SendKeys(adminEmail);
             Driver.FindElement(By.CssSelector("input[placeholder='Password']"))
                   .SendKeys(adminPassword);
             Driver.FindElement(By.CssSelector("button[type='submit']")).Click();
 
-            _wait.Until(d => d.FindElement(By.CssSelector("nav")));
-
             _wait.Until(d => d.FindElement(By.LinkText("Dashboard"))).Click();
-
             _wait.Until(d => d.FindElement(By.CssSelector("a[href='/admin/tags']"))).Click();
+        }
+
+        [Test]
+        public void GetAllTags_RowsOrEmptyMessage()
+        {
+            LoginAsAdmin();
 
             _wait.Until(d =>
-                d.FindElement(By.CssSelector("[data-testid='new-tag-input']"))
+                d.FindElements(By.CssSelector("tr[data-testid^='tag-row-']")).Any() ||
+                d.FindElements(By.CssSelector("table tbody tr td")).Any()
             );
 
-            // GET ALL
-
-            _wait.Until(d =>
-                d.FindElements(By.CssSelector("table tbody tr[data-testid^='tag-row-']"))
-                 .Any(r => !string.IsNullOrWhiteSpace(r.Text))
-                || d.FindElements(By.CssSelector("table tbody tr td"))
-                    .Any(cell => cell.Text.Contains("No tags found."))
-            );
-
-            var uiRows = Driver
-              .FindElements(By.CssSelector("table tbody tr[data-testid^='tag-row-']"))
-              .Where(r => !string.IsNullOrWhiteSpace(r.Text))
-              .ToList();
-
-            if (uiRows.Count == 0)
+            var rows = Driver.FindElements(By.CssSelector("tr[data-testid^='tag-row-']")).ToList();
+            if (rows.Any())
             {
-                var placeholder = Driver.FindElement(By.CssSelector("table tbody tr td"));
-                Assert.AreEqual(
-                    "No tags found.",
-                    placeholder.Text.Trim(),
-                    "When there are no tags, UI should show the 'No tags found.' message."
-                );
+                Assert.That(rows.Count, Is.GreaterThan(0), "Expected at least one tag row.");
             }
             else
             {
-                Assert.IsTrue(
-                    uiRows.Count > 0,
-                    $"Expected at least one tag row, but found {uiRows.Count}"
-                );
+                var placeholder = Driver.FindElement(By.CssSelector("table tbody tr td"));
+                Assert.That(placeholder.Text.Trim(), Is.EqualTo("No tags found."), "Expected empty-state message.");
             }
+        }
 
+        [Test]
+        public void Create_Update_Delete_Tag_Via_UI()
+        {
+            LoginAsAdmin();
 
             // CREATE
-
             const string newTagName = "SeleniumTestTag";
-            var newNameInput = Driver.FindElement(By.CssSelector("[data-testid='new-tag-input']"));
-            newNameInput.SendKeys(newTagName);
+            _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='new-tag-input']")))
+                 .SendKeys(newTagName);
             Driver.FindElement(By.CssSelector("[data-testid='new-tag-btn']")).Click();
-            IWebElement createdRow = _wait.Until(d =>
-            d.FindElements(By.CssSelector("tr[data-testid^='tag-row-']"))
-                    .FirstOrDefault(r => r.Text.Contains(newTagName))
-               ) ?? throw new NoSuchElementException($"Row with text '{newTagName}' never appeared.");
 
-            Assert.IsTrue(createdRow.Text.Contains(newTagName),
-            $"Expected to find '{newTagName}' in the created row.");
+            var createdRow = _wait.Until(d =>
+                d.FindElements(By.CssSelector("tr[data-testid^='tag-row-']"))
+                 .FirstOrDefault(r => r.Text.Contains(newTagName))
+            ) ?? throw new NoSuchElementException($"Tag '{newTagName}' was not created.");
+            Assert.That(createdRow.Text, Does.Contain(newTagName));
 
-            var tagId = createdRow
-                             .GetAttribute("data-testid")
-                             .Replace("tag-row-", "");
-
-            Assert.AreEqual(newTagName, createdRow.Text,
-                "After creation, the tag text should exactly match.");
+            var tagId = createdRow.GetAttribute("data-testid").Replace("tag-row-", string.Empty);
 
             // UPDATE
-
             Driver.FindElement(By.CssSelector($"[data-testid='edit-btn-{tagId}']")).Click();
-            _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='edit-tag-input']")));
-            var editInput = Driver.FindElement(By.CssSelector("[data-testid='edit-tag-input']"));
+            var editInput = _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='edit-tag-input']")));
+            const string updatedName = "EditedSeleniumTag";
+
             editInput.Clear();
-            editInput.SendKeys("EditedSeleniumTag");
+            editInput.SendKeys(updatedName);
             Driver.FindElement(By.CssSelector("[data-testid='save-tag-btn']")).Click();
+
             _wait.Until(d =>
-                d.FindElement(By.CssSelector($"[data-testid='tag-row-{tagId}']"))
-                 .Text.Contains("EditedSeleniumTag")
+                d.FindElement(By.CssSelector($"tr[data-testid='tag-row-{tagId}']")).Text.Contains(updatedName)
             );
-            Assert.IsTrue(Driver.PageSource.Contains("EditedSeleniumTag"));
+            Assert.That(Driver.PageSource, Does.Contain(updatedName));
 
             // DELETE
-
             Driver.FindElement(By.CssSelector($"[data-testid='delete-btn-{tagId}']")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("[data-testid='confirm-delete-btn']"))).Click();
-            _wait.Until(d => !d.PageSource.Contains("EditedSeleniumTag"));
-            Assert.False(Driver.PageSource.Contains("EditedSeleniumTag"));
+            _wait.Until(d => !Driver.PageSource.Contains(updatedName));
+
+            Assert.False(Driver.PageSource.Contains(updatedName), "Tag was not deleted.");
         }
     }
 }
