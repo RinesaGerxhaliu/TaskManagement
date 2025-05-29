@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using OpenQA.Selenium;
@@ -9,15 +7,9 @@ using OpenQA.Selenium.Support.UI;
 
 namespace TaskManagement.UI.Tests
 {
-    public class AuthResponseDTO
-    {
-        public string JwtToken { get; set; } = "";
-    }
-
     [TestFixture]
     public class TaskCrudTests : BaseTest
     {
-        private const string ApiBase = "https://localhost:7086/api/Auth";
         private const string LoginUrl = "http://localhost:3000/login";
         private const string ListUrl = "http://localhost:3000/";
 
@@ -37,9 +29,7 @@ namespace TaskManagement.UI.Tests
             var pwd = Environment.GetEnvironmentVariable("TEST_USER_PASSWORD")
                         ?? throw new InvalidOperationException("Set TEST_USER_PASSWORD");
 
-            using var http = new HttpClient();
-            await http.PostAsJsonAsync($"{ApiBase}/Register", new { Username = email, Password = pwd });
-
+            // Navigate to login page
             Driver.Navigate().GoToUrl(LoginUrl);
             _wait.Until(d => d.FindElement(By.CssSelector("input[placeholder='Email']")))
                  .SendKeys(email);
@@ -47,10 +37,12 @@ namespace TaskManagement.UI.Tests
             Driver.FindElement(By.CssSelector("button[type='submit']")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("nav")));
 
+            // Go to task list
             Driver.Navigate().GoToUrl(ListUrl);
             var addBtn = _wait.Until(d => d.FindElement(By.CssSelector("button.btn-success")));
             addBtn.Click();
 
+            // Wait for add task form to load
             _wait.Until(d => d.FindElement(By.CssSelector("input[data-testid='task-title']")));
             _wait.Until(d => d.FindElements(By.CssSelector("select[data-testid='task-category'] option")).Count > 1);
 
@@ -69,7 +61,9 @@ namespace TaskManagement.UI.Tests
             var createAlert = _wait.Until(d => d.FindElement(By.CssSelector(".alert-success")));
             Assert.That(createAlert.Text, Does.Contain("Task added"));
 
+            // Check task appears in list
             Driver.Navigate().GoToUrl(ListUrl);
+            await Task.Delay(2000);
             _wait.Until(d =>
                 d.FindElements(By.CssSelector("table.table-striped tbody tr"))
                  .Any(r => r.Text.Contains(originalName))
@@ -77,6 +71,7 @@ namespace TaskManagement.UI.Tests
             var row = Driver.FindElements(By.CssSelector("table.table-striped tbody tr"))
                             .First(r => r.Text.Contains(originalName));
 
+            // Edit task
             row.FindElement(By.CssSelector("button.btn-outline-primary")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("input[name='title']")));
 
@@ -89,7 +84,9 @@ namespace TaskManagement.UI.Tests
             var updateAlert = _wait.Until(d => d.FindElement(By.CssSelector(".alert-success")));
             Assert.That(updateAlert.Text, Does.Contain("Task updated"));
 
+            // Verify update
             Driver.Navigate().GoToUrl(ListUrl);
+            await Task.Delay(2000);
             _wait.Until(d =>
                 d.FindElements(By.CssSelector("table.table-striped tbody tr"))
                  .Any(r => r.Text.Contains(updatedName))
@@ -97,6 +94,7 @@ namespace TaskManagement.UI.Tests
             var updatedRow = Driver.FindElements(By.CssSelector("table.table-striped tbody tr"))
                                    .First(r => r.Text.Contains(updatedName));
 
+            // Delete task
             updatedRow.FindElement(By.CssSelector("button.btn-outline-danger")).Click();
             _wait.Until(d => d.FindElement(By.CssSelector("button.btn-danger"))).Click();
 

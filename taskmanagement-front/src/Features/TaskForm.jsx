@@ -281,34 +281,7 @@ const TaskForm = ({ initial = {} }) => {
           color: "#1F3A93",
         }}
       >
-        <h4>Test Results:</h4>
-        <table className="table table-striped table-bordered">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Message</th>
-            </tr>
-          </thead>
-          <tbody>
-            {testResults.map((test) => (
-              <tr key={test.id}>
-                <td>{test.id}</td>
-                <td>{test.description}</td>
-                <td
-                  style={{
-                    color: test.status === "Pass" ? "green" : "red",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {test.status}
-                </td>
-                <td>{test.message}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+       
       </div>
     </div>
   );
