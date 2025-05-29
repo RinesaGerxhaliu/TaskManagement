@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import TaskTagManager from "../Components/Layout/TaskTagManager";
-import { jwtDecode } from "jwt-decode";
+import { useLocation } from "react-router-dom";
+import {jwtDecode} from "jwt-decode";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
@@ -14,11 +15,9 @@ export default function TaskList() {
   const [success, setSuccess] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmTaskId, setConfirmTaskId] = useState(null);
-
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Extract user ID from JWT token
   function getUserIdFromToken() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -27,36 +26,41 @@ export default function TaskList() {
     }
     try {
       const decoded = jwtDecode(token);
-      return decoded?.[
-        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-      ] || null;
-    } catch {
+      return (
+        decoded &&
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+      ) || null;
+    } catch (e) {
       setError("Invalid token. Please login again.");
       return null;
     }
   }
 
-  // Validate input filters
-  const isValidCategory = id =>
-    id === "" || categories.some(c => c.id === Number(id));
+  // Validate category filter: it should be either "" or a category id from categories
+  const isValidCategory = catId => {
+    if (catId === "") return true;
+    return categories.some(c => c.id === Number(catId));
+  };
+
+  // Validate status filter: it should be "" or one of allowed statuses
   const allowedStatuses = ["", "ToDo", "In Progress", "Done"];
   const isValidStatus = status => allowedStatuses.includes(status);
 
-  // Clear success messages after timeout
   useEffect(() => {
     if (!success) return;
     const timer = setTimeout(() => setSuccess(""), 3000);
     return () => clearTimeout(timer);
   }, [success]);
 
-  // Fetch tasks and categories
   useEffect(() => {
     const userId = getUserIdFromToken();
+    if (!userId) return;
     const token = localStorage.getItem("token");
-    if (!userId || !token) return;
 
     fetch(`https://localhost:7086/api/TaskItem/user/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then(async res => {
         if (!res.ok) throw new Error(await res.text());
@@ -66,7 +70,9 @@ export default function TaskList() {
       .catch(e => setError(e.message));
 
     fetch(`https://localhost:7086/api/Category`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then(async res => {
         if (!res.ok) throw new Error(await res.text());
@@ -76,7 +82,6 @@ export default function TaskList() {
       .catch(e => setError(e.message));
   }, []);
 
-  // Show success message from redirected page
   useEffect(() => {
     if (location.state?.message) {
       setSuccess(location.state.message);
@@ -84,19 +89,16 @@ export default function TaskList() {
     }
   }, [location, navigate]);
 
-  // Filter logic
   const filteredTasks = tasks.filter(task => {
-    if (!isValidCategory(filterCategory) || !isValidStatus(filterStatus))
-      return false;
+    if (!isValidCategory(filterCategory)) return false;
+    if (!isValidStatus(filterStatus)) return false;
 
     const categoryMatch =
       filterCategory === "" || task.categoryId === Number(filterCategory);
     const statusMatch = filterStatus === "" || task.status === filterStatus;
-
     return categoryMatch && statusMatch;
   });
 
-  // Confirm deletion
   const confirmDelete = id => {
     if (!tasks.find(t => t.id === id)) {
       setError("Task not found or already deleted.");
@@ -106,39 +108,75 @@ export default function TaskList() {
     setShowConfirm(true);
   };
 
-  // Handle deletion
   const handleDeleteTask = async () => {
-    const token = localStorage.getItem("token");
-    if (!confirmTaskId || !token) {
-      setError("No task selected or user not authenticated.");
+    if (confirmTaskId == null) {
+      setError("No task selected for deletion.");
       setShowConfirm(false);
       return;
     }
-
     try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("User not authenticated");
+
       const res = await fetch(
         `https://localhost:7086/api/TaskItem/${confirmTaskId}`,
         {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      if (!res.ok) throw new Error(await res.text());
-
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Delete failed");
+      }
       setTasks(prev => prev.filter(t => t.id !== confirmTaskId));
       setSuccess("Task deleted successfully!");
     } catch (e) {
-      setError(e.message);
+       setError(e.message || "An error occurred while deleting the task.");
     } finally {
       setShowConfirm(false);
       setConfirmTaskId(null);
     }
   };
 
-  // Cancel deletion
   const cancelDelete = () => {
     setShowConfirm(false);
     setConfirmTaskId(null);
+  };
+
+  const handleSelectedTaskChange = e => {
+    const val = e.target.value;
+    const numVal = Number(val);
+    if (val === "") {
+      setSelectedTaskId(null);
+    } else if (tasks.find(t => t.id === numVal)) {
+      setSelectedTaskId(numVal);
+    } else {
+      setError("Selected task is invalid.");
+      setSelectedTaskId(null);
+    }
+  };
+
+  const handleFilterCategoryChange = e => {
+    const val = e.target.value;
+    if (isValidCategory(val)) {
+      setFilterCategory(val);
+      setError("");
+    } else {
+      setError("Invalid category selected.");
+    }
+  };
+
+  const handleFilterStatusChange = e => {
+    const val = e.target.value;
+    if (isValidStatus(val)) {
+      setFilterStatus(val);
+      setError("");
+    } else {
+      setError("Invalid status selected.");
+    }
   };
 
   return (
@@ -153,19 +191,12 @@ export default function TaskList() {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="row mb-3 g-3">
         <div className="col-md-6">
           <select
             className="form-select"
             value={filterCategory}
-            onChange={e => {
-              const val = e.target.value;
-              if (isValidCategory(val)) {
-                setFilterCategory(val);
-                setError("");
-              } else setError("Invalid category selected.");
-            }}
+            onChange={handleFilterCategoryChange}
           >
             <option value="">-- Filter by Category --</option>
             {categories.map(c => (
@@ -179,13 +210,7 @@ export default function TaskList() {
           <select
             className="form-select"
             value={filterStatus}
-            onChange={e => {
-              const val = e.target.value;
-              if (isValidStatus(val)) {
-                setFilterStatus(val);
-                setError("");
-              } else setError("Invalid status selected.");
-            }}
+            onChange={handleFilterStatusChange}
           >
             <option value="">-- Filter by Status --</option>
             <option value="ToDo">To Do</option>
@@ -195,23 +220,13 @@ export default function TaskList() {
         </div>
       </div>
 
-      {/* Task selection for tag management */}
       <div className="row mb-4 g-3">
         <div className="col-md-6">
           <label className="form-label">Select Task to Tag</label>
           <select
             className="form-select"
             value={selectedTaskId || ""}
-            onChange={e => {
-              const val = Number(e.target.value);
-              if (!val) {
-                setSelectedTaskId(null);
-              } else if (tasks.find(t => t.id === val)) {
-                setSelectedTaskId(val);
-              } else {
-                setError("Selected task is invalid.");
-              }
-            }}
+            onChange={handleSelectedTaskChange}
           >
             <option value="" disabled>
               Select a task…
@@ -235,7 +250,6 @@ export default function TaskList() {
         </div>
       </div>
 
-      {/* Task Table */}
       <div className="table-responsive">
         <table className="table table-striped">
           <thead className="table-primary text-center align-middle">
@@ -253,7 +267,7 @@ export default function TaskList() {
           <tbody className="text-center align-middle">
             {filteredTasks.length === 0 ? (
               <tr>
-                <td colSpan="8" className="text-muted py-4">
+                <td colSpan="8" className="text-center py-4 text-muted">
                   No tasks found.
                 </td>
               </tr>
@@ -308,7 +322,6 @@ export default function TaskList() {
         </table>
       </div>
 
-      {/* Delete confirmation modal */}
       {showConfirm && (
         <div
           style={{

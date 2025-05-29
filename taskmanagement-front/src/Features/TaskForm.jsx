@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const MAX_TITLE_LENGTH = 100;
+const MAX_TITLE_LENGTH = 50;
 const MIN_TITLE_LENGTH = 1;
 const MAX_DESCRIPTION_LENGTH = 500;
 const VALID_STATUSES = ["ToDo", "InProgress", "Done"];
@@ -72,7 +72,7 @@ const TaskForm = ({ initial = {} }) => {
     if (!categoryId || isNaN(Number(categoryId)) || Number(categoryId) <= 0)
       return "Please select a valid category.";
 
-    return null; // no errors
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -135,7 +135,6 @@ const TaskForm = ({ initial = {} }) => {
     navigate("/");
   };
 
-  // Kontrolli i validitetit për çaktivizim butoni
   const isFormValid = !validate();
 
   return (
@@ -274,7 +273,6 @@ const TaskForm = ({ initial = {} }) => {
         </div>
       </form>
 
-      {/* Test Results */}
       <div
         style={{
           width: "100%",

@@ -5,7 +5,7 @@ namespace TaskManagement.Application.DTOs.TaskItemDTO
     public class EditTaskItem
     {
         [Required(ErrorMessage = "Title is required.")]
-        [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
+        [StringLength(50, ErrorMessage = "Title cannot exceed 100 characters.")]
         public string Title { get; set; } = null!;
 
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]

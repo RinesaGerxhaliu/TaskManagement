@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using TaskManagement.Application.DTOs.TaskItemDTO;
 using TaskManagement.Application.Interfaces;
 
